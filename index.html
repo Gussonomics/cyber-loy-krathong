@@ -1,0 +1,2273 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CYBER LOY KRATHONG // นทีดิจิทัล 2077</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Orbitron:wght@500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-deep: #050511;
+      --bg-panel: rgba(11, 14, 35, 0.84);
+      --bg-panel-solid: #0c1029;
+      --surface-card: rgba(19, 25, 58, 0.72);
+      --border-dim: rgba(0, 243, 255, 0.24);
+      --border-bright: #00f3ff;
+      --ink: #eef6ff;
+      --muted: #8ea4c8;
+      --neon-cyan: #00f3ff;
+      --neon-magenta: #ff00a0;
+      --neon-gold: #ffd13b;
+      --neon-emerald: #00ff9d;
+      --neon-purple: #9d4edd;
+      --radius: 14px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-6: 24px;
+      --space-8: 32px;
+      --font-main: 'Chakra Petch', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-display: 'Orbitron', 'Chakra Petch', sans-serif;
+      --shadow-neon: 0 0 22px rgba(0, 243, 255, 0.22), 0 8px 32px rgba(2, 4, 18, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100vh;
+      background: var(--bg-deep);
+      color: var(--ink);
+      font-family: var(--font-main);
+      line-height: 1.5;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    /* Fullscreen Interactive River & Sky Stage */
+    .stage-wrapper {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+    }
+
+    #cyberCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      cursor: crosshair;
+      display: block;
+    }
+
+    /* Floating DOM Overlay for Clickable Krathongs on the River */
+    #riverKrathongsLayer {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 44vh;
+      z-index: 3;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .floating-krathong {
+      position: absolute;
+      pointer-events: auto;
+      cursor: pointer;
+      transform: translate(-50%, -50%);
+      transition: filter 0.2s ease, transform 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      will-change: left, top, transform;
+    }
+
+    .floating-krathong:hover {
+      filter: drop-shadow(0 0 16px var(--neon-cyan)) brightness(1.18);
+      z-index: 20 !important;
+    }
+
+    .floating-krathong:focus-visible {
+      outline: 2px solid var(--neon-gold);
+      border-radius: 12px;
+    }
+
+    .krathong-tag {
+      margin-top: -6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(7, 10, 28, 0.88);
+      border: 1px solid var(--neon-cyan);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      box-shadow: 0 0 12px rgba(0, 243, 255, 0.35);
+      backdrop-filter: blur(4px);
+    }
+
+    /* Top HUD Header */
+    .hud-header {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-6);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+      pointer-events: none;
+    }
+
+    .hud-header > * {
+      pointer-events: auto;
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dim);
+      border-left: 4px solid var(--neon-cyan);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow-neon);
+    }
+
+    .brand-emblem {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: radial-gradient(circle at 50% 50%, rgba(0, 243, 255, 0.28), rgba(255, 0, 160, 0.18));
+      border: 1px solid rgba(0, 243, 255, 0.5);
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: clamp(16px, 2.2vw, 21px);
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      background: linear-gradient(90deg, #00f3ff, #ffd13b, #ff00a0);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .brand-subtitle {
+      margin: 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      letter-spacing: 0.02em;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    /* Requested Single Counter: Total Krathongs */
+    .counter-pill {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-panel);
+      border: 1px solid rgba(255, 209, 59, 0.45);
+      border-radius: 999px;
+      padding: 8px 18px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 18px rgba(255, 209, 59, 0.16);
+    }
+
+    .counter-label {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .counter-value {
+      font-family: var(--font-display);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--neon-gold);
+      text-shadow: 0 0 10px rgba(255, 209, 59, 0.65);
+    }
+
+    /* Buttons */
+    .btn {
+      font-family: var(--font-main);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border-dim);
+      background: var(--bg-panel);
+      color: var(--ink);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .btn:hover {
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--neon-gold);
+      outline-offset: 2px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #00d2ff 0%, #7a00ff 55%, #ff00a0 100%);
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #ffffff;
+      font-weight: 700;
+      box-shadow: 0 0 24px rgba(255, 0, 160, 0.45);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 32px rgba(0, 243, 255, 0.75), 0 0 18px rgba(255, 0, 160, 0.65);
+      filter: brightness(1.1);
+    }
+
+    .btn-audio[data-active="true"] {
+      border-color: var(--neon-emerald);
+      color: var(--neon-emerald);
+      box-shadow: 0 0 16px rgba(0, 255, 157, 0.25);
+    }
+
+    /* Sky Interactive Hint & Empty River State */
+    .river-center-overlay {
+      position: relative;
+      z-index: 6;
+      max-width: 660px;
+      margin: auto;
+      padding: var(--space-4);
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .empty-river-card {
+      pointer-events: auto;
+      background: rgba(9, 13, 34, 0.82);
+      border: 1px solid rgba(0, 243, 255, 0.38);
+      border-radius: 18px;
+      padding: var(--space-6);
+      backdrop-filter: blur(14px);
+      box-shadow: var(--shadow-neon);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    .empty-river-card.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(12px);
+      display: none;
+    }
+
+    .cyber-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: rgba(0, 243, 255, 0.14);
+      border: 1px solid rgba(0, 243, 255, 0.45);
+      color: var(--neon-cyan);
+      margin-bottom: var(--space-3);
+    }
+
+    .hero-heading {
+      margin: 0 0 var(--space-2) 0;
+      font-size: clamp(22px, 3.5vw, 30px);
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 18px rgba(0, 243, 255, 0.45);
+    }
+
+    .hero-desc {
+      margin: 0 0 var(--space-4) 0;
+      font-size: 15px;
+      color: var(--muted);
+    }
+
+    /* Bottom Dock Bar */
+    .bottom-dock {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: var(--space-4) var(--space-6) var(--space-6);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      pointer-events: none;
+    }
+
+    .bottom-dock > * {
+      pointer-events: auto;
+    }
+
+    .sky-tip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-panel);
+      border: 1px solid var(--border-dim);
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-size: 13.5px;
+      color: var(--ink);
+      backdrop-filter: blur(10px);
+    }
+
+    .pulse-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--neon-magenta);
+      box-shadow: 0 0 10px var(--neon-magenta);
+      animation: pulseGlow 1.6s infinite ease-in-out;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.35); opacity: 1; }
+    }
+
+    /* Modal Backdrop (Customization Studio & Wish E-Card) */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(3, 5, 16, 0.78);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .studio-modal {
+      width: 100%;
+      max-width: 980px;
+      max-height: 92vh;
+      overflow-y: auto;
+      background: linear-gradient(165deg, rgba(13, 18, 44, 0.96) 0%, rgba(8, 10, 26, 0.98) 100%);
+      border: 1px solid var(--neon-cyan);
+      border-radius: 18px;
+      box-shadow: 0 0 40px rgba(0, 243, 255, 0.25), 0 20px 60px rgba(0, 0, 0, 0.85);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: var(--space-4) var(--space-6);
+      border-bottom: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+    }
+
+    .modal-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--neon-cyan);
+    }
+
+    .icon-close {
+      background: transparent;
+      border: 1px solid var(--border-dim);
+      color: var(--muted);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 18px;
+      display: grid;
+      place-items: center;
+      transition: all 0.2s ease;
+    }
+
+    .icon-close:hover {
+      color: #fff;
+      border-color: var(--neon-magenta);
+      box-shadow: 0 0 12px rgba(255, 0, 160, 0.4);
+    }
+
+    /* Studio Grid Layout */
+    .studio-body {
+      padding: var(--space-6);
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: var(--space-6);
+    }
+
+    @media (min-width: 820px) {
+      .studio-body {
+        grid-template-columns: 360px 1fr;
+        align-items: start;
+      }
+    }
+
+    /* Live Hologram Preview Stage */
+    .preview-stage {
+      background: radial-gradient(circle at 50% 60%, rgba(0, 243, 255, 0.16), rgba(10, 13, 34, 0.92) 72%);
+      border: 1px solid rgba(0, 243, 255, 0.35);
+      border-radius: 16px;
+      padding: var(--space-6) var(--space-4);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-stage::before {
+      content: "HOLO-PREVIEW // LIVE";
+      position: absolute;
+      top: 12px;
+      left: 14px;
+      font-family: var(--font-display);
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      color: var(--neon-cyan);
+      opacity: 0.8;
+    }
+
+    .holo-pedestal {
+      width: 240px;
+      height: 220px;
+      display: grid;
+      place-items: center;
+      animation: floatBob 3.2s ease-in-out infinite;
+    }
+
+    @keyframes floatBob {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .preview-specs {
+      width: 100%;
+      margin-top: var(--space-3);
+      padding-top: var(--space-3);
+      border-top: 1px dashed rgba(0, 243, 255, 0.25);
+      font-size: 13px;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .preview-specs strong {
+      color: var(--ink);
+    }
+
+    /* Step Tabs & Builder Controls */
+    .builder-panel {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .step-indicator {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-2);
+      background: rgba(6, 9, 24, 0.7);
+      padding: 6px;
+      border-radius: 12px;
+      border: 1px solid var(--border-dim);
+    }
+
+    .step-tab {
+      font-family: var(--font-main);
+      font-size: 14px;
+      font-weight: 600;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .step-tab.active {
+      background: rgba(0, 243, 255, 0.16);
+      color: var(--neon-cyan);
+      box-shadow: inset 0 0 0 1px rgba(0, 243, 255, 0.45);
+    }
+
+    .config-section {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .config-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--neon-gold);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .option-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+      gap: var(--space-2);
+    }
+
+    .choice-card {
+      font-family: var(--font-main);
+      background: var(--surface-card);
+      border: 1px solid rgba(142, 164, 200, 0.24);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--ink);
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: all 0.18s ease;
+    }
+
+    .choice-card:hover {
+      border-color: rgba(0, 243, 255, 0.6);
+      background: rgba(25, 35, 78, 0.85);
+    }
+
+    .choice-card.selected {
+      border-color: var(--neon-cyan);
+      background: rgba(0, 243, 255, 0.14);
+      box-shadow: 0 0 16px rgba(0, 243, 255, 0.22);
+    }
+
+    .choice-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .choice-sub {
+      font-size: 11.5px;
+      color: var(--muted);
+    }
+
+    /* Color Swatches */
+    .color-row {
+      display: flex;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    .color-swatch {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .color-swatch.selected {
+      transform: scale(1.15);
+      border-color: #ffffff;
+      box-shadow: 0 0 16px currentColor;
+    }
+
+    /* Form Controls for Step 2 (Make a Wish) */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      font-family: var(--font-main);
+      font-size: 14.5px;
+      color: var(--ink);
+      background: rgba(7, 11, 28, 0.85);
+      border: 1px solid rgba(0, 243, 255, 0.32);
+      border-radius: 10px;
+      padding: 11px 14px;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      user-select: text;
+    }
+
+    .form-input:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 14px rgba(0, 243, 255, 0.3);
+    }
+
+    .form-textarea {
+      min-height: 92px;
+      resize: vertical;
+    }
+
+    .preset-wishes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .preset-chip {
+      font-family: var(--font-main);
+      font-size: 12px;
+      padding: 5px 11px;
+      border-radius: 999px;
+      background: rgba(157, 78, 221, 0.16);
+      border: 1px solid rgba(157, 78, 221, 0.45);
+      color: #e5c6ff;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-chip:hover {
+      background: rgba(157, 78, 221, 0.32);
+      border-color: var(--neon-magenta);
+      color: #fff;
+    }
+
+    .error-msg {
+      color: #ff5c8a;
+      font-size: 13px;
+      min-height: 20px;
+    }
+
+    .studio-footer {
+      padding: var(--space-4) var(--space-6);
+      border-top: 1px solid var(--border-dim);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      flex-wrap: wrap;
+    }
+
+    /* E-Card Wish Inspection Modal */
+    .ecard-modal {
+      width: 100%;
+      max-width: 480px;
+      background: linear-gradient(160deg, #0d1333 0%, #07091c 100%);
+      border: 1px solid var(--neon-gold);
+      border-radius: 20px;
+      padding: var(--space-6);
+      box-shadow: 0 0 40px rgba(255, 209, 59, 0.25), 0 20px 50px rgba(0, 0, 0, 0.9);
+      text-align: center;
+      position: relative;
+    }
+
+    .ecard-category {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: rgba(255, 209, 59, 0.15);
+      border: 1px solid rgba(255, 209, 59, 0.5);
+      color: var(--neon-gold);
+      margin-bottom: var(--space-3);
+    }
+
+    .ecard-svg-wrap {
+      width: 200px;
+      height: 185px;
+      margin: 0 auto var(--space-3);
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle, rgba(0, 243, 255, 0.18) 0%, transparent 70%);
+    }
+
+    .ecard-sender {
+      margin: 0 0 var(--space-2) 0;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--neon-cyan);
+    }
+
+    .ecard-wish {
+      margin: 0 0 var(--space-4) 0;
+      padding: var(--space-4);
+      background: rgba(255, 255, 255, 0.04);
+      border-left: 3px solid var(--neon-magenta);
+      border-radius: 10px;
+      font-size: 15.5px;
+      color: var(--ink);
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .hidden-step {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .hud-header {
+        padding: var(--space-3) var(--space-4);
+      }
+      .studio-body {
+        padding: var(--space-4);
+      }
+      .bottom-dock {
+        padding: var(--space-3) var(--space-4) var(--space-4);
+        justify-content: center;
+      }
+      .sky-tip {
+        font-size: 12px;
+        text-align: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="stage-wrapper">
+    <!-- Interactive Night Sky, Cyber Bangkok Skyline, Fireworks & Digital Chao Phraya River -->
+    <canvas id="cyberCanvas" aria-label="ฉากแม่น้ำเจ้าพระยาดิจิทัลยามค่ำคืน คลิกบนท้องฟ้าเพื่อจุดพลุไซเบอร์"></canvas>
+
+    <!-- Top Header HUD -->
+    <header class="hud-header">
+      <div class="brand-cluster">
+        <div class="brand-emblem" aria-hidden="true">
+          <svg width="26" height="26" viewBox="0 0 32 32" fill="none">
+            <path d="M16 4L21 13L29 15L22 22H10L3 15L11 13L16 4Z" stroke="#00f3ff" stroke-width="2" fill="rgba(0,243,255,0.2)"/>
+            <circle cx="16" cy="14" r="3" fill="#ffd13b"/>
+            <path d="M6 26H26" stroke="#ff00a0" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="brand-title">CYBER LOY KRATHONG</h1>
+          <p class="brand-subtitle">เทศกาลลอยกระทงดิจิทัล // NEO-CHAO PHRAYA NIGHT</p>
+        </div>
+      </div>
+
+      <div class="hud-controls">
+        <!-- Single requested counter: Total Krathongs -->
+        <div class="counter-pill" aria-live="polite">
+          <span class="counter-label">จำนวนกระทงทั้งหมด</span>
+          <span class="counter-value" id="totalKrathongCount">0</span>
+        </div>
+
+        <!-- Ambient & SFX Audio Toggle -->
+        <button type="button" class="btn btn-audio" id="audioToggleBtn" data-active="false" aria-pressed="false">
+          <span id="audioIcon">🔇</span>
+          <span id="audioLabel">เปิดเสียงบรรยากาศ</span>
+        </button>
+
+        <!-- Trigger Fireworks Celebration -->
+        <button type="button" class="btn" id="launchFireworkBtn">
+          <span>🎆</span>
+          <span>จุดพลุนีออน</span>
+        </button>
+
+        <!-- Primary CTA: Build Your Krathong -->
+        <button type="button" class="btn btn-primary" id="openStudioBtn">
+          <span>🪷</span>
+          <span>สร้างกระทงของคุณ</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Center Empty State Prompt (Hidden automatically once first Krathong is floated) -->
+    <main class="river-center-overlay">
+      <div class="empty-river-card" id="emptyRiverCard">
+        <div class="cyber-badge">⚡ SYSTEM READY // NEO-RIVER ONLINE</div>
+        <h2 class="hero-heading">ร่วมลอยกระทงไซเบอร์พังก์ท่ามกลางแสงนีออน</h2>
+        <p class="hero-desc">
+          ยังไม่มีกระทงลอยอยู่ในสายน้ำดิจิทัลขณะนี้ กดปุ่มด้านล่างเพื่อประดิษฐ์กระทงเทคโนโลยีของคุณ เขียนคำอธิษฐาน และปล่อยลงสู่แม่น้ำเจ้าพระยาโฮโลแกรม หรือคลิกบนท้องฟ้าเพื่อจุดพลุเฉลิมฉลอง!
+        </p>
+        <button type="button" class="btn btn-primary" id="emptyStateBuildBtn">
+          <span>✨ เริ่มประดิษฐ์กระทงไซเบอร์</span>
+        </button>
+      </div>
+    </main>
+
+    <!-- Interactive Layer where floated Krathongs drift across the river -->
+    <div id="riverKrathongsLayer" aria-label="สายน้ำสำหรับลอยกระทง คลิกที่กระทงเพื่ออ่านคำอธิษฐาน"></div>
+
+    <!-- Bottom Interactive Guide Bar -->
+    <footer class="bottom-dock">
+      <div class="sky-tip">
+        <span class="pulse-dot"></span>
+        <span><strong>Interactive Sky:</strong> คลิกหรือแตะพื้นที่บนท้องฟ้าเพื่อจุดพลุไฟไซเบอร์พร้อมเสียงเอฟเฟกต์ • คลิกที่กระทงในน้ำเพื่อดูการ์ดคำอวยพร</span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- MODAL 1: KRATHONG CUSTOMIZATION STUDIO & MAKE A WISH -->
+  <div class="modal-backdrop" id="studioModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="studioModalTitle">
+    <div class="studio-modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="studioModalTitle">
+          <span>⚙️</span>
+          <span>CYBER KRATHONG STUDIO // ประดิษฐ์กระทงเทคโนโลยี</span>
+        </h2>
+        <button type="button" class="icon-close" id="closeStudioBtn" aria-label="ปิดหน้าต่าง">✕</button>
+      </div>
+
+      <div class="studio-body">
+        <!-- Left Column: Live Holographic SVG Krathong Preview -->
+        <div class="preview-stage">
+          <div class="holo-pedestal" id="liveKrathongPreview" aria-label="ตัวอย่างกระทงไซเบอร์ของคุณ"></div>
+          <div class="preview-specs">
+            <div>ฐานกระทง: <strong id="specBaseName">-</strong></div>
+            <div>แกนดอกไม้โฮโลแกรม: <strong id="specFlowerName">-</strong></div>
+            <div>โมดูลเสริม: <strong id="specToppingName">-</strong></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Step 1 (Customization) & Step 2 (Make a Wish) -->
+        <div class="builder-panel">
+          <div class="step-indicator" role="tablist">
+            <button type="button" class="step-tab active" id="tabStep1" role="tab" aria-selected="true">
+              1. ประกอบร่างกระทงไซเบอร์
+            </button>
+            <button type="button" class="step-tab" id="tabStep2" role="tab" aria-selected="false">
+              2. เขียนคำอธิษฐาน & ปล่อยกระทง
+            </button>
+          </div>
+
+          <!-- STEP 1: HARDWARE & HOLO CUSTOMIZATION -->
+          <div id="step1Content" class="config-section">
+            <div>
+              <div class="config-label">
+                <span>1. โครงฐานกระทงเทคโนโลยี (Cyber Chassis)</span>
+              </div>
+              <div class="option-grid" id="baseOptionsGrid"></div>
+            </div>
+
+            <div>
+              <div class="config-label">
+                <span>2. ดอกไม้โฮโลแกรม & แกนพลังงาน (Holo-Flora Core)</span>
+              </div>
+              <div class="option-grid" id="flowerOptionsGrid"></div>
+            </div>
+
+            <div>
+              <div class="config-label">
+                <span>3. อุปกรณ์เสริมไฮเทค (Cyber Toppings)</span>
+              </div>
+              <div class="option-grid" id="toppingOptionsGrid"></div>
+            </div>
+
+            <div>
+              <div class="config-label">
+                <span>4. โทนแสงพลังงานนีออน (Neon Aura Spectrum)</span>
+              </div>
+              <div class="color-row" id="colorOptionsRow"></div>
+            </div>
+          </div>
+
+          <!-- STEP 2: MAKE A WISH -->
+          <div id="step2Content" class="config-section hidden-step">
+            <div class="form-group">
+              <label class="config-label" for="senderNameInput">ชื่อของคุณ (Sender Name)</label>
+              <input type="text" id="senderNameInput" class="form-input" placeholder="เช่น นีโอ, พลอย 2077, Cyber Traveler..." maxlength="40">
+            </div>
+
+            <div class="form-group">
+              <span class="config-label">หมวดหมู่พรที่ต้องการขอ (Wish Category)</span>
+              <div class="option-grid" id="wishCategoryGrid"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="config-label" for="wishMessageInput">คำอธิษฐานส่งถึงสายน้ำดิจิทัล (Your Wish)</label>
+              <textarea id="wishMessageInput" class="form-textarea" placeholder="พิมพ์คำอธิษฐานของคุณที่นี่..." maxlength="200"></textarea>
+              <div class="preset-wishes" id="presetWishesRow"></div>
+            </div>
+
+            <div class="error-msg" id="wishFormError" role="alert"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="studio-footer">
+        <button type="button" class="btn" id="prevStepBtn" style="visibility: hidden;">
+          ← ย้อนกลับไปแต่งกระทง
+        </button>
+        <div style="display: flex; gap: 10px; margin-left: auto;">
+          <button type="button" class="btn btn-primary" id="nextStepBtn">
+            ไปหน้าเขียนคำอธิษฐาน →
+          </button>
+          <button type="button" class="btn btn-primary hidden-step" id="releaseKrathongBtn">
+            🌊 ปล่อยกระทงลงสู่แม่น้ำไซเบอร์
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 2: FLOATING KRATHONG WISH E-CARD -->
+  <div class="modal-backdrop" id="ecardModalBackdrop" role="dialog" aria-modal="true" aria-labelledby="ecardSenderName">
+    <div class="ecard-modal">
+      <button type="button" class="icon-close" id="closeEcardBtn" style="position: absolute; top: 16px; right: 16px;" aria-label="ปิดการ์ดคำอวยพร">✕</button>
+      <div class="ecard-category" id="ecardCategoryBadge">พรด้านการงาน</div>
+      <div class="ecard-svg-wrap" id="ecardKrathongVisual"></div>
+      <h3 class="ecard-sender" id="ecardSenderName">กระทงของ ผู้มาเยือน</h3>
+      <blockquote class="ecard-wish" id="ecardWishText"></blockquote>
+      <div style="display: flex; justify-content: center; gap: 10px;">
+        <button type="button" class="btn btn-primary" id="ecardCelebrateBtn">
+          🎆 จุดพลุฉลองให้คำอธิษฐานนี้
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**************************************************************
+     * 1. CYBERPUNK KRATHONG CUSTOMIZATION CATALOG
+     **************************************************************/
+    const BASES = [
+      {
+        id: 'quantum_lotus',
+        name: 'Quantum Lotus Pod',
+        desc: 'ฐานกลีบบัวคาร์บอนไฟเบอร์เรืองแสง',
+        icon: '🛸'
+      },
+      {
+        id: 'hover_drone',
+        name: 'Hover Drone Ring',
+        desc: 'วงแหวนแม่เหล็กต้านแรงโน้มถ่วง',
+        icon: '⚙️'
+      },
+      {
+        id: 'hexa_circuit',
+        name: 'Hexa-Circuit Deck',
+        desc: 'ฐานแผงวงจรควอนตัม 6 เหลี่ยม',
+        icon: '💠'
+      },
+      {
+        id: 'prism_core',
+        name: 'Crystal Prism Base',
+        desc: 'แท่นคริสตัลหักเหแสงเลเซอร์',
+        icon: '💎'
+      }
+    ];
+
+    const FLOWERS = [
+      {
+        id: 'holo_lotus',
+        name: 'Holo-Lotus Matrix',
+        desc: 'ดอกบัวโฮโลแกรม 3 มิติ',
+        icon: '🪷'
+      },
+      {
+        id: 'fiber_marigold',
+        name: 'Cyber Marigold',
+        desc: 'ดาวเรืองใยแก้วนำแสงสีทอง',
+        icon: '🌼'
+      },
+      {
+        id: 'plasma_orchid',
+        name: 'Plasma Orchid',
+        desc: 'กล้วยไม้พลาสมาคลื่นความถี่สูง',
+        icon: '🌸'
+      },
+      {
+        id: 'synth_rose',
+        name: 'Neon Synth Rose',
+        desc: 'กุหลาบดิจิทัลเรืองแสงนีออน',
+        icon: '🌹'
+      }
+    ];
+
+    const TOPPINGS = [
+      {
+        id: 'laser_candle',
+        name: 'Laser Candle & Plasma',
+        desc: 'ธูปพลาสมาและเทียนลำแสงเลเซอร์',
+        icon: '🕯️'
+      },
+      {
+        id: 'mecha_neko',
+        name: 'Mecha Lucky Neko',
+        desc: 'แมวกวักไซบอร์กเรียกทรัพย์',
+        icon: '🐱'
+      },
+      {
+        id: 'crypto_reactor',
+        name: 'Quantum Coin Core',
+        desc: 'เหรียญพลังงานมั่งคั่งดิจิทัล',
+        icon: '🪙'
+      },
+      {
+        id: 'holo_banner',
+        name: 'Holo-Matrix Sign',
+        desc: 'ป้ายไฟวิ่งโฮโลแกรมล้ำยุค',
+        icon: '📟'
+      }
+    ];
+
+    const NEON_COLORS = [
+      { id: 'cyan', name: 'Cyber Cyan', hex: '#00f3ff', secondary: '#ff00a0' },
+      { id: 'magenta', name: 'Neon Magenta', hex: '#ff00a0', secondary: '#00f3ff' },
+      { id: 'gold', name: 'Solar Gold', hex: '#ffd13b', secondary: '#00f3ff' },
+      { id: 'emerald', name: 'Matrix Emerald', hex: '#00ff9d', secondary: '#9d4edd' }
+    ];
+
+    const WISH_CATEGORIES = [
+      { id: 'career', name: '🚀 การงาน & เทคโนโลยี', badge: 'พรด้านการงาน & นวัตกรรม' },
+      { id: 'wealth', name: '💎 การเงิน & ความมั่งคั่ง', badge: 'พรด้านการเงิน & โชคลาภ' },
+      { id: 'love', name: '💖 ความรัก & ความสัมพันธ์', badge: 'พรด้านความรัก & มิตรภาพ' },
+      { id: 'health', name: '⚡ สุขภาพ & พลังงานชีวิต', badge: 'พรด้านสุขภาพ & ความสุข' }
+    ];
+
+    const PRESET_WISHES = [
+      'ขอให้โปรเจกต์สำเร็จราบรื่น ระบบเสถียรไร้บั๊กตลอดปี!',
+      'ขอให้ชีวิตสว่างไสวเหมือนแสงนีออน การเงินมั่งคั่งรุ่งเรือง',
+      'ปล่อยความทุกข์ลอยไปกับสายน้ำดิจิทัล เปิดรับพลังงานดีๆ เข้ามา',
+      'ขอให้สุขภาพแข็งแรง มีความสุขและสมหวังในทุกสิ่งที่ตั้งใจ'
+    ];
+
+    /**************************************************************
+     * 2. APPLICATION STATE
+     **************************************************************/
+    const state = {
+      currentConfig: {
+        base: BASES[0].id,
+        flower: FLOWERS[0].id,
+        topping: TOPPINGS[0].id,
+        color: NEON_COLORS[0].id,
+        sender: '',
+        category: WISH_CATEGORIES[0].id,
+        wish: ''
+      },
+      floatedKrathongs: [],
+      audioEnabled: false
+    };
+
+    /**************************************************************
+     * 3. WEB AUDIO API: AMBIENT CYBER-THAI SYNTH & FIREWORK SFX
+     **************************************************************/
+    class CyberAudioEngine {
+      constructor() {
+        this.ctx = null;
+        this.isPlaying = false;
+        this.masterGain = null;
+        this.delayNode = null;
+        this.melodyTimer = null;
+        this.waterNode = null;
+        this.activeNodes = [];
+        this.stepIndex = 0;
+        // D Minor / Cyberpunk Synthwave Bass & Arpeggio frequencies (Hz)
+        this.bassProgression = [36.71, 36.71, 29.14, 32.70, 36.71, 36.71, 24.50, 27.50]; // D1, Bb0, C1, G0, A0
+        this.padChords = [
+          [146.83, 174.61, 220.00, 261.63, 329.63], // Dm9
+          [116.54, 146.83, 174.61, 220.00, 293.66], // Bbmaj9
+          [98.00,  146.83, 174.61, 220.00, 261.63], // Gm7(add11)
+          [110.00, 164.81, 196.00, 220.00, 277.18]  // A7 / Dark tension
+        ];
+        this.scale = [293.66, 349.23, 440.00, 523.25, 587.33, 659.25, 587.33, 440.00]; // D4, F4, A4, C5, D5, E5
+      }
+
+      init() {
+        if (this.ctx) return;
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtx) return;
+        this.ctx = new AudioCtx();
+
+        // Master compressor + gain for punchy Cyberpunk Synthwave mix
+        const compressor = this.ctx.createDynamicsCompressor();
+        compressor.threshold.value = -18;
+        compressor.knee.value = 12;
+        compressor.ratio.value = 4;
+
+        this.masterGain = this.ctx.createGain();
+        this.masterGain.gain.value = 0.36;
+
+        // Stereo Cyber Delay / Echo Bus (375ms dotted-8th synthwave echo)
+        this.delayNode = this.ctx.createDelay(1.0);
+        this.delayNode.delayTime.value = 0.375;
+        const delayFeedback = this.ctx.createGain();
+        delayFeedback.gain.value = 0.42;
+        const delayFilter = this.ctx.createBiquadFilter();
+        delayFilter.type = 'lowpass';
+        delayFilter.frequency.value = 1800;
+
+        this.delayNode.connect(delayFilter);
+        delayFilter.connect(delayFeedback);
+        delayFeedback.connect(this.delayNode);
+        this.delayNode.connect(this.masterGain);
+
+        this.masterGain.connect(compressor);
+        compressor.connect(this.ctx.destination);
+      }
+
+      toggle() {
+        this.init();
+        if (!this.ctx) return false;
+        if (this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+        if (this.isPlaying) {
+          this.stopAmbient();
+          return false;
+        } else {
+          this.startAmbient();
+          return true;
+        }
+      }
+
+      startAmbient() {
+        if (!this.ctx || this.isPlaying) return;
+        this.isPlaying = true;
+        this.stepIndex = 0;
+
+        // 1. Deep Blade-Runner Style Analog Sub-Drone & Neon City Atmosphere
+        const droneOsc1 = this.ctx.createOscillator();
+        const droneOsc2 = this.ctx.createOscillator();
+        const droneFilter = this.ctx.createBiquadFilter();
+        const droneGain = this.ctx.createGain();
+        const lfo = this.ctx.createOscillator();
+        const lfoGain = this.ctx.createGain();
+
+        droneOsc1.type = 'sawtooth';
+        droneOsc1.frequency.value = 36.71; // Deep D1
+        droneOsc1.detune.value = -9;
+
+        droneOsc2.type = 'sawtooth';
+        droneOsc2.frequency.value = 73.42; // D2 octave
+        droneOsc2.detune.value = 9;
+
+        droneFilter.type = 'lowpass';
+        droneFilter.frequency.value = 145;
+        droneFilter.Q.value = 4.5;
+
+        // Slow filter sweep LFO for breathing cyberpunk pad texture
+        lfo.type = 'sine';
+        lfo.frequency.value = 0.14;
+        lfoGain.gain.value = 65;
+        lfo.connect(lfoGain);
+        lfoGain.connect(droneFilter.frequency);
+
+        droneGain.gain.value = 0.24;
+
+        droneOsc1.connect(droneFilter);
+        droneOsc2.connect(droneFilter);
+        droneFilter.connect(droneGain);
+        droneGain.connect(this.masterGain);
+
+        droneOsc1.start();
+        droneOsc2.start();
+        lfo.start();
+        this.activeNodes.push(droneOsc1, droneOsc2, lfo);
+
+        // Subtle futuristic rain / neon static shimmer
+        const bufferSize = this.ctx.sampleRate * 2;
+        const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          output[i] = (Math.random() * 2 - 1) * 0.012;
+        }
+        this.waterNode = this.ctx.createBufferSource();
+        this.waterNode.buffer = noiseBuffer;
+        this.waterNode.loop = true;
+
+        const bandpass = this.ctx.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        bandpass.frequency.value = 950;
+        bandpass.Q.value = 1.8;
+
+        const shimmerGain = this.ctx.createGain();
+        shimmerGain.gain.value = 0.18;
+
+        this.waterNode.connect(bandpass);
+        bandpass.connect(shimmerGain);
+        shimmerGain.connect(this.masterGain);
+        this.waterNode.start();
+
+        // 2. Cyberpunk Darksynth / Synthwave Sequencer (120 BPM = 125ms per 16th step)
+        const triggerCyberStep = () => {
+          if (!this.isPlaying || !this.ctx) return;
+          const now = this.ctx.currentTime;
+          const step = this.stepIndex;
+          const bar = Math.floor(step / 16);
+          const stepInBar = step % 16;
+
+          // A. Lush Vangelis / CS-80 Warm Detuned Synth Pad on step 0 of every 2 bars
+          if (step % 32 === 0) {
+            const chord = this.padChords[Math.floor(step / 32) % this.padChords.length];
+            this.playCyberPadChord(chord, now, 3.9);
+          }
+
+          // B. Driving Rolling Synthwave Bassline (every 16th note)
+          const rootFreq = this.bassProgression[bar % this.bassProgression.length];
+          const isAccent = (stepInBar % 4 === 0);
+          const bassFreq = (stepInBar % 2 === 1) ? rootFreq * 2 : rootFreq;
+          this.playSynthBassNote(bassFreq, now, isAccent);
+
+          // C. Neon Cyberpunk Arpeggio Lead (pulsing futuristic plucks with stereo delay)
+          if (stepInBar % 2 === 0 || stepInBar === 15) {
+            const arpIdx = (stepInBar / 2 + bar) % this.scale.length;
+            const arpFreq = this.scale[ Math.floor(arpIdx) ];
+            this.playNeonArpPluck(arpFreq, now, stepInBar === 0 || stepInBar === 6);
+          }
+
+          // D. Electronic Cyber Kick & Snare Pulse (Subtle Synthwave Beat)
+          if (stepInBar === 0 || stepInBar === 8) {
+            this.playCyberKick(now);
+          } else if (stepInBar === 4 || stepInBar === 12) {
+            this.playCyberSnare(now);
+          }
+
+          this.stepIndex++;
+        };
+
+        triggerCyberStep();
+        this.melodyTimer = setInterval(triggerCyberStep, 135);
+      }
+
+      playSynthBassNote(freq, time, accent) {
+        const osc = this.ctx.createOscillator();
+        const sub = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(freq, time);
+
+        sub.type = 'square';
+        sub.frequency.setValueAtTime(freq * 0.5, time);
+
+        filter.type = 'lowpass';
+        filter.Q.value = 5.5;
+        const maxCutoff = accent ? 920 : 520;
+        filter.frequency.setValueAtTime(maxCutoff, time);
+        filter.frequency.exponentialRampToValueAtTime(95, time + 0.12);
+
+        const peakGain = accent ? 0.22 : 0.14;
+        gain.gain.setValueAtTime(0.001, time);
+        gain.gain.linearRampToValueAtTime(peakGain, time + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.13);
+
+        osc.connect(filter);
+        sub.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+
+        osc.start(time);
+        sub.start(time);
+        osc.stop(time + 0.14);
+        sub.stop(time + 0.14);
+      }
+
+      playCyberPadChord(freqs, time, duration) {
+        const filter = this.ctx.createBiquadFilter();
+        const padGain = this.ctx.createGain();
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(380, time);
+        filter.frequency.linearRampToValueAtTime(1350, time + duration * 0.55);
+        filter.frequency.linearRampToValueAtTime(420, time + duration);
+
+        padGain.gain.setValueAtTime(0.001, time);
+        padGain.gain.linearRampToValueAtTime(0.065, time + 0.85);
+        padGain.gain.linearRampToValueAtTime(0.001, time + duration);
+
+        filter.connect(padGain);
+        padGain.connect(this.masterGain);
+        if (this.delayNode) padGain.connect(this.delayNode);
+
+        freqs.forEach((f, idx) => {
+          const osc = this.ctx.createOscillator();
+          osc.type = idx % 2 === 0 ? 'sawtooth' : 'triangle';
+          osc.frequency.setValueAtTime(f, time);
+          osc.detune.setValueAtTime((idx - 2) * 7, time);
+          osc.connect(filter);
+          osc.start(time);
+          osc.stop(time + duration + 0.05);
+        });
+      }
+
+      playNeonArpPluck(freq, time, bright) {
+        const osc1 = this.ctx.createOscillator();
+        const osc2 = this.ctx.createOscillator();
+        const filter = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc1.type = 'sawtooth';
+        osc1.frequency.setValueAtTime(freq, time);
+        osc1.detune.value = -6;
+
+        osc2.type = 'square';
+        osc2.frequency.setValueAtTime(freq, time);
+        osc2.detune.value = 6;
+
+        filter.type = 'lowpass';
+        filter.Q.value = 3.5;
+        filter.frequency.setValueAtTime(bright ? 2600 : 1600, time);
+        filter.frequency.exponentialRampToValueAtTime(280, time + 0.22);
+
+        gain.gain.setValueAtTime(0.001, time);
+        gain.gain.linearRampToValueAtTime(bright ? 0.11 : 0.075, time + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.24);
+
+        osc1.connect(filter);
+        osc2.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        if (this.delayNode) gain.connect(this.delayNode);
+
+        osc1.start(time);
+        osc2.start(time);
+        osc1.stop(time + 0.25);
+        osc2.stop(time + 0.25);
+      }
+
+      playCyberKick(time) {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(125, time);
+        osc.frequency.exponentialRampToValueAtTime(34, time + 0.14);
+
+        gain.gain.setValueAtTime(0.32, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.22);
+
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(time);
+        osc.stop(time + 0.23);
+      }
+
+      playCyberSnare(time) {
+        // Gated synthwave snare burst
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.18);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.055));
+        }
+
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(320, time);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.14, time);
+        gain.gain.exponentialRampToValueAtTime(0.001, time + 0.18);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.masterGain);
+        noise.start(time);
+      }
+
+      stopAmbient() {
+        this.isPlaying = false;
+        if (this.melodyTimer) {
+          clearInterval(this.melodyTimer);
+          this.melodyTimer = null;
+        }
+        if (this.waterNode) {
+          try { this.waterNode.stop(); } catch (e) {}
+          this.waterNode.disconnect();
+          this.waterNode = null;
+        }
+        if (this.activeNodes && this.activeNodes.length) {
+          this.activeNodes.forEach(node => {
+            try { node.stop(); } catch (e) {}
+            try { node.disconnect(); } catch (e) {}
+          });
+          this.activeNodes = [];
+        }
+      }
+
+      playFireworkSound() {
+        if (!this.isPlaying || !this.ctx) return;
+        const now = this.ctx.currentTime;
+
+        // Sci-Fi Plasma Cannon Charge & Sub-Bass Impact
+        const laser = this.ctx.createOscillator();
+        const laserGain = this.ctx.createGain();
+        laser.type = 'sawtooth';
+        laser.frequency.setValueAtTime(180, now);
+        laser.frequency.exponentialRampToValueAtTime(1420, now + 0.14);
+        laser.frequency.exponentialRampToValueAtTime(65, now + 0.36);
+
+        laserGain.gain.setValueAtTime(0.12, now);
+        laserGain.gain.exponentialRampToValueAtTime(0.001, now + 0.38);
+        laser.connect(laserGain);
+        laserGain.connect(this.masterGain);
+        if (this.delayNode) laserGain.connect(this.delayNode);
+        laser.start(now);
+        laser.stop(now + 0.39);
+
+        // Cyber Explosion Plasma Burst
+        const bufferSize = Math.floor(this.ctx.sampleRate * 0.65);
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.16));
+        }
+
+        const burst = this.ctx.createBufferSource();
+        burst.buffer = buffer;
+
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.Q.value = 3.0;
+        filter.frequency.setValueAtTime(2200, now + 0.12);
+        filter.frequency.exponentialRampToValueAtTime(240, now + 0.65);
+
+        const burstGain = this.ctx.createGain();
+        burstGain.gain.setValueAtTime(0.38, now + 0.12);
+        burstGain.gain.exponentialRampToValueAtTime(0.008, now + 0.72);
+
+        burst.connect(filter);
+        filter.connect(burstGain);
+        burstGain.connect(this.masterGain);
+        if (this.delayNode) burstGain.connect(this.delayNode);
+        burst.start(now + 0.12);
+      }
+
+      playLaunchChime() {
+        if (!this.isPlaying || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        // Cyberpunk Hologram Warp Power-Up Arpeggio (Dm9 -> D5)
+        const notes = [293.66, 349.23, 440.00, 523.25, 587.33, 659.25, 880.00];
+        notes.forEach((freq, idx) => {
+          const t = now + idx * 0.055;
+          const osc = this.ctx.createOscillator();
+          const filter = this.ctx.createBiquadFilter();
+          const gain = this.ctx.createGain();
+
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(freq, t);
+
+          filter.type = 'lowpass';
+          filter.Q.value = 4;
+          filter.frequency.setValueAtTime(3200, t);
+          filter.frequency.exponentialRampToValueAtTime(400, t + 0.55);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.15, t + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.masterGain);
+          if (this.delayNode) gain.connect(this.delayNode);
+
+          osc.start(t);
+          osc.stop(t + 0.62);
+        });
+      }
+    }
+
+    const audioEngine = new CyberAudioEngine();
+
+    /**************************************************************
+     * 4. SVG CYBERPUNK KRATHONG GENERATOR
+     **************************************************************/
+    function buildKrathongSVG(config, size = 180) {
+      const colorObj = NEON_COLORS.find(c => c.id === config.color) || NEON_COLORS[0];
+      const primary = colorObj.hex;
+      const secondary = colorObj.secondary;
+      const uid = 'k_' + Math.random().toString(36).substring(2, 9);
+
+      // 1. Base SVG Layer
+      let baseLayer = '';
+      if (config.base === 'quantum_lotus') {
+        baseLayer = `
+          <!-- Quantum Lotus Pod Base -->
+          <ellipse cx="100" cy="146" rx="74" ry="18" fill="#09102c" stroke="${primary}" stroke-width="2.5"/>
+          <path d="M28 142 L48 118 L72 136 L100 114 L128 136 L152 118 L172 142 Z" fill="rgba(12, 22, 56, 0.92)" stroke="${primary}" stroke-width="2"/>
+          <path d="M40 146 H160" stroke="${secondary}" stroke-width="2" stroke-dasharray="6 4"/>
+        `;
+      } else if (config.base === 'hover_drone') {
+        baseLayer = `
+          <!-- Hover Drone Ring Base -->
+          <ellipse cx="100" cy="148" rx="78" ry="16" fill="#070d24" stroke="${primary}" stroke-width="3"/>
+          <ellipse cx="100" cy="142" rx="64" ry="12" fill="#121c44" stroke="${secondary}" stroke-width="1.8" stroke-dasharray="10 5"/>
+          <circle cx="48" cy="145" r="5" fill="${primary}"/>
+          <circle cx="100" cy="151" r="5" fill="#ffd13b"/>
+          <circle cx="152" cy="145" r="5" fill="${primary}"/>
+        `;
+      } else if (config.base === 'hexa_circuit') {
+        baseLayer = `
+          <!-- Hexa-Circuit Deck Base -->
+          <polygon points="30,140 62,124 138,124 170,140 144,158 56,158" fill="#091230" stroke="${primary}" stroke-width="2.5"/>
+          <polyline points="48,140 72,132 128,132 152,140" fill="none" stroke="${secondary}" stroke-width="2"/>
+          <line x1="72" y1="132" x2="66" y2="154" stroke="${primary}" stroke-width="1.5"/>
+          <line x1="128" y1="132" x2="134" y2="154" stroke="${primary}" stroke-width="1.5"/>
+        `;
+      } else {
+        baseLayer = `
+          <!-- Crystal Prism Deck Base -->
+          <polygon points="26,142 58,118 100,126 142,118 174,142 138,158 62,158" fill="rgba(0, 243, 255, 0.18)" stroke="${primary}" stroke-width="2.4"/>
+          <polygon points="52,142 100,116 148,142 100,156" fill="rgba(255, 0, 160, 0.22)" stroke="${secondary}" stroke-width="1.8"/>
+        `;
+      }
+
+      // 2. Holo-Flower Core Layer
+      let flowerLayer = '';
+      if (config.flower === 'holo_lotus') {
+        flowerLayer = `
+          <!-- Holo-Lotus Matrix -->
+          <path d="M100 72 L122 108 L100 128 L78 108 Z" fill="rgba(255, 0, 160, 0.35)" stroke="${secondary}" stroke-width="2"/>
+          <path d="M100 78 L142 104 L122 128 L100 122 Z" fill="rgba(0, 243, 255, 0.28)" stroke="${primary}" stroke-width="1.8"/>
+          <path d="M100 78 L58 104 L78 128 L100 122 Z" fill="rgba(0, 243, 255, 0.28)" stroke="${primary}" stroke-width="1.8"/>
+          <circle cx="100" cy="105" r="7" fill="#ffd13b"/>
+        `;
+      } else if (config.flower === 'fiber_marigold') {
+        flowerLayer = `
+          <!-- Cyber Marigold Array -->
+          <circle cx="76" cy="114" r="14" fill="rgba(255, 209, 59, 0.28)" stroke="#ffd13b" stroke-width="2" stroke-dasharray="4 2"/>
+          <circle cx="124" cy="114" r="14" fill="rgba(255, 209, 59, 0.28)" stroke="#ffd13b" stroke-width="2" stroke-dasharray="4 2"/>
+          <circle cx="100" cy="106" r="18" fill="rgba(255, 168, 0, 0.35)" stroke="${primary}" stroke-width="2.2"/>
+          <circle cx="100" cy="106" r="7" fill="#ffd13b"/>
+        `;
+      } else if (config.flower === 'plasma_orchid') {
+        flowerLayer = `
+          <!-- Plasma Orchid Cluster -->
+          <path d="M100 84 C125 78, 145 104, 118 122 C136 132, 108 140, 100 124 C92 140, 64 132, 82 122 C55 104, 75 78, 100 84 Z"
+                fill="rgba(157, 78, 221, 0.42)" stroke="${secondary}" stroke-width="2"/>
+          <circle cx="100" cy="108" r="8" fill="${primary}"/>
+        `;
+      } else {
+        flowerLayer = `
+          <!-- Neon Synth Rose -->
+          <circle cx="100" cy="108" r="21" fill="rgba(255, 0, 110, 0.32)" stroke="${secondary}" stroke-width="2.2"/>
+          <path d="M88 106 Q100 90 112 106 Q102 122 88 106 Z" fill="none" stroke="${primary}" stroke-width="2"/>
+          <circle cx="100" cy="106" r="5" fill="#ffd13b"/>
+        `;
+      }
+
+      // 3. Topping Tech Module Layer
+      let toppingLayer = '';
+      if (config.topping === 'laser_candle') {
+        toppingLayer = `
+          <!-- Plasma Incense & Laser Candle -->
+          <line x1="88" y1="95" x2="80" y2="42" stroke="${secondary}" stroke-width="2"/>
+          <line x1="112" y1="95" x2="120" y2="42" stroke="${secondary}" stroke-width="2"/>
+          <circle cx="80" cy="40" r="3.5" fill="#00f3ff"/>
+          <circle cx="120" cy="40" r="3.5" fill="#00f3ff"/>
+          <rect x="96" y="54" width="8" height="40" rx="3" fill="#e2f1ff" stroke="${primary}" stroke-width="1.5"/>
+          <path d="M100 24 Q110 40 100 52 Q90 40 100 24 Z" fill="#ffd13b"/>
+          <circle cx="100" cy="38" r="12" fill="rgba(255, 209, 59, 0.32)"/>
+        `;
+      } else if (config.topping === 'mecha_neko') {
+        toppingLayer = `
+          <!-- Mecha Lucky Neko Bot -->
+          <path d="M78 78 L82 54 L94 64 H106 L118 54 L122 78 Z" fill="#131f4c" stroke="${primary}" stroke-width="2"/>
+          <rect x="78" y="64" width="44" height="32" rx="10" fill="#10193f" stroke="${primary}" stroke-width="2"/>
+          <circle cx="91" cy="78" r="4" fill="#00f3ff"/>
+          <circle cx="109" cy="78" r="4" fill="#00f3ff"/>
+          <path d="M96 86 H104" stroke="#ffd13b" stroke-width="2.5" stroke-linecap="round"/>
+          <!-- Glowing Candle Antenna -->
+          <line x1="100" y1="54" x2="100" y2="34" stroke="#ffd13b" stroke-width="2.5"/>
+          <circle cx="100" cy="30" r="6" fill="#ffd13b"/>
+        `;
+      } else if (config.topping === 'crypto_reactor') {
+        toppingLayer = `
+          <!-- Quantum Coin Core -->
+          <circle cx="100" cy="64" r="22" fill="rgba(255, 209, 59, 0.22)" stroke="#ffd13b" stroke-width="2.5"/>
+          <polygon points="100,47 114,64 100,81 86,64" fill="rgba(0, 243, 255, 0.35)" stroke="${primary}" stroke-width="2"/>
+          <text x="100" y="69" text-anchor="middle" fill="#ffd13b" font-size="14" font-family="Orbitron, sans-serif" font-weight="700">฿</text>
+        `;
+      } else {
+        toppingLayer = `
+          <!-- Holo-Matrix Signboard -->
+          <rect x="64" y="48" width="72" height="28" rx="6" fill="rgba(7, 13, 36, 0.92)" stroke="${primary}" stroke-width="2"/>
+          <text x="100" y="66" text-anchor="middle" fill="#00f3ff" font-size="11" font-family="Orbitron, sans-serif" font-weight="700">WISH // 2077</text>
+          <line x1="84" y1="76" x2="84" y2="96" stroke="${secondary}" stroke-width="2"/>
+          <line x1="116" y1="76" x2="116" y2="96" stroke="${secondary}" stroke-width="2"/>
+          <path d="M100 24 Q107 36 100 45 Q93 36 100 24 Z" fill="#ffd13b"/>
+        `;
+      }
+
+      return `
+        <svg width="${size}" height="${size * 0.9}" viewBox="0 0 200 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="${uid}_glow" cx="50%" cy="55%" r="50%">
+              <stop offset="0%" stop-color="${primary}" stop-opacity="0.42"/>
+              <stop offset="100%" stop-color="${primary}" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <!-- Water Reflection & Aura -->
+          <ellipse cx="100" cy="158" rx="82" ry="12" fill="url(#${uid}_glow)"/>
+          <ellipse cx="100" cy="164" rx="56" ry="5" fill="${primary}" fill-opacity="0.35"/>
+          ${toppingLayer}
+          ${flowerLayer}
+          ${baseLayer}
+        </svg>
+      `;
+    }
+
+    /**************************************************************
+     * 5. HTML5 CANVAS: CYBER RIVER, SKYLINE & INTERACTIVE FIREWORKS
+     **************************************************************/
+    const canvas = document.getElementById('cyberCanvas');
+    const ctx = canvas.getContext('2d');
+    let cw = window.innerWidth;
+    let ch = window.innerHeight;
+
+    const stars = [];
+    const fireworks = [];
+    const sparks = [];
+    const waterRipples = [];
+
+    function resizeCanvas() {
+      cw = window.innerWidth;
+      ch = window.innerHeight;
+      canvas.width = cw;
+      canvas.height = ch;
+      initStars();
+    }
+
+    function initStars() {
+      stars.length = 0;
+      const count = Math.min(110, Math.floor((cw * ch) / 12000));
+      for (let i = 0; i < count; i++) {
+        stars.push({
+          x: Math.random() * cw,
+          y: Math.random() * (ch * 0.52),
+          r: Math.random() * 1.7 + 0.5,
+          phase: Math.random() * Math.PI * 2,
+          color: Math.random() > 0.75 ? '#00f3ff' : (Math.random() > 0.5 ? '#ffd13b' : '#ffffff')
+        });
+      }
+    }
+
+    function spawnFirework(targetX, targetY) {
+      const startX = targetX + (Math.random() - 0.5) * 80;
+      const startY = ch * 0.56;
+      const palette = ['#00f3ff', '#ff00a0', '#ffd13b', '#00ff9d', '#b565ff'];
+      const color = palette[Math.floor(Math.random() * palette.length)];
+
+      fireworks.push({
+        x: startX,
+        y: startY,
+        tx: targetX,
+        ty: Math.min(targetY, ch * 0.5),
+        color,
+        progress: 0,
+        speed: 0.045 + Math.random() * 0.02
+      });
+
+      audioEngine.playFireworkSound();
+    }
+
+    function explodeFirework(x, y, mainColor) {
+      const count = 46;
+      const altColor = '#ffd13b';
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.15;
+        const speed = 1.6 + Math.random() * 4.6;
+        sparks.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          decay: 0.014 + Math.random() * 0.014,
+          color: i % 3 === 0 ? altColor : mainColor,
+          size: 2 + Math.random() * 2
+        });
+      }
+    }
+
+    // Click on sky to launch fireworks
+    canvas.addEventListener('pointerdown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      // Launch firework where clicked (if clicked on river, shoot into the sky above that X coordinate)
+      const skyY = clickY < ch * 0.54 ? clickY : ch * (0.18 + Math.random() * 0.25);
+      spawnFirework(clickX, skyY);
+    });
+
+    let waveTick = 0;
+
+    function renderScene() {
+      waveTick += 0.018;
+      const horizonY = ch * 0.55;
+
+      // 1. Cyber Night Sky Gradient
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
+      skyGrad.addColorStop(0, '#040410');
+      skyGrad.addColorStop(0.55, '#0b0c2a');
+      skyGrad.addColorStop(1, '#1d1147');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, cw, horizonY);
+
+      // 2. Twinkling Cyber Stars
+      for (const s of stars) {
+        const alpha = 0.45 + 0.55 * Math.sin(waveTick * 2 + s.phase);
+        ctx.fillStyle = s.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      // 3. Giant Full Cyber-Moon with Holographic Rings
+      const moonX = cw * 0.78;
+      const moonY = ch * 0.19;
+      const moonRadius = Math.min(cw, ch) * 0.075;
+
+      const moonGlow = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.3, moonX, moonY, moonRadius * 2.8);
+      moonGlow.addColorStop(0, 'rgba(255, 209, 59, 0.48)');
+      moonGlow.addColorStop(0.5, 'rgba(255, 0, 160, 0.16)');
+      moonGlow.addColorStop(1, 'rgba(0, 243, 255, 0)');
+      ctx.fillStyle = moonGlow;
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonRadius * 2.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff3c4';
+      ctx.beginPath();
+      ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cyber ring around moon
+      ctx.strokeStyle = 'rgba(0, 243, 255, 0.55)';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.ellipse(moonX, moonY, moonRadius * 1.45, moonRadius * 0.35, -0.22, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // 4. Neo-Bangkok Silhouette & Temple Spire (Wat Arun Cyber Silhouette)
+      ctx.fillStyle = '#07091e';
+      const stepWidth = 48;
+      for (let x = 0; x < cw + stepWidth; x += stepWidth) {
+        const bHeight = 28 + ((Math.sin(x * 0.09) + 1) * 26);
+        ctx.fillRect(x, horizonY - bHeight, stepWidth - 4, bHeight);
+      }
+
+      // Cyber Spire Silhouette on left-center
+      const spireX = cw * 0.22;
+      ctx.fillStyle = '#090b24';
+      ctx.beginPath();
+      ctx.moveTo(spireX - 55, horizonY);
+      ctx.lineTo(spireX - 24, horizonY - 68);
+      ctx.lineTo(spireX, horizonY - 140);
+      ctx.lineTo(spireX + 24, horizonY - 68);
+      ctx.lineTo(spireX + 55, horizonY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 209, 59, 0.45)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Horizon Neon Laser Line
+      ctx.strokeStyle = '#00f3ff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(0, horizonY);
+      ctx.lineTo(cw, horizonY);
+      ctx.stroke();
+
+      // 5. Digital Chao Phraya River with Perspective Grid & Neon Waves
+      const riverGrad = ctx.createLinearGradient(0, horizonY, 0, ch);
+      riverGrad.addColorStop(0, '#100c36');
+      riverGrad.addColorStop(0.45, '#07112e');
+      riverGrad.addColorStop(1, '#030616');
+      ctx.fillStyle = riverGrad;
+      ctx.fillRect(0, horizonY, cw, ch - horizonY);
+
+      // Perspective Cyber Grid Lines on River
+      ctx.strokeStyle = 'rgba(0, 243, 255, 0.13)';
+      ctx.lineWidth = 1;
+      const vanishX = cw * 0.5;
+      for (let i = -10; i <= 10; i++) {
+        ctx.beginPath();
+        ctx.moveTo(vanishX + i * 35, horizonY);
+        ctx.lineTo(vanishX + i * 240, ch);
+        ctx.stroke();
+      }
+
+      // Animated Glowing Horizontal Water Waves
+      for (let row = 1; row <= 12; row++) {
+        const norm = row / 12;
+        const y = horizonY + Math.pow(norm, 1.45) * (ch - horizonY);
+        ctx.strokeStyle = row % 2 === 0
+          ? `rgba(0, 243, 255, ${0.12 + norm * 0.22})`
+          : `rgba(255, 0, 160, ${0.10 + norm * 0.18})`;
+        ctx.lineWidth = 1 + norm * 1.5;
+        ctx.beginPath();
+        for (let x = 0; x <= cw; x += 40) {
+          const wy = y + Math.sin(x * 0.015 + waveTick * 2 + row) * (2.5 * norm);
+          if (x === 0) ctx.moveTo(x, wy);
+          else ctx.lineTo(x, wy);
+        }
+        ctx.stroke();
+      }
+
+      // Moon reflection shimmer on water
+      for (let i = 0; i < 14; i++) {
+        const ry = horizonY + 14 + i * ((ch - horizonY) / 16);
+        const rw = (18 + i * 5) + Math.sin(waveTick * 3 + i) * 8;
+        ctx.fillStyle = 'rgba(255, 209, 59, 0.22)';
+        ctx.fillRect(moonX - rw / 2, ry, rw, 3);
+      }
+
+      // 6. Update & Render Fireworks Rockets
+      for (let i = fireworks.length - 1; i >= 0; i--) {
+        const fw = fireworks[i];
+        fw.progress += fw.speed;
+        const currX = fw.x + (fw.tx - fw.x) * fw.progress;
+        const currY = fw.y + (fw.ty - fw.y) * fw.progress;
+
+        ctx.fillStyle = fw.color;
+        ctx.beginPath();
+        ctx.arc(currX, currY, 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        if (fw.progress >= 1) {
+          explodeFirework(fw.tx, fw.ty, fw.color);
+          fireworks.splice(i, 1);
+        }
+      }
+
+      // 7. Update & Render Firework Sparks
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const sp = sparks[i];
+        sp.x += sp.vx;
+        sp.y += sp.vy;
+        sp.vy += 0.055; // subtle gravity
+        sp.vx *= 0.985;
+        sp.alpha -= sp.decay;
+
+        if (sp.alpha <= 0) {
+          sparks.splice(i, 1);
+          continue;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, sp.alpha);
+        ctx.fillStyle = sp.color;
+        ctx.shadowColor = sp.color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(sp.x, sp.y, sp.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // 8. Update Floating Krathong DOM Positions on the River
+      updateFloatingKrathongsDOM();
+
+      requestAnimationFrame(renderScene);
+    }
+
+    /**************************************************************
+     * 6. FLOATING KRATHONGS RIVER CONTROLLER
+     **************************************************************/
+    const riverLayer = document.getElementById('riverKrathongsLayer');
+    const totalCountEl = document.getElementById('totalKrathongCount');
+    const emptyRiverCard = document.getElementById('emptyRiverCard');
+
+    function addKrathongToRiver(krathongData) {
+      state.floatedKrathongs.push(krathongData);
+      totalCountEl.textContent = state.floatedKrathongs.length.toLocaleString('th-TH');
+
+      if (state.floatedKrathongs.length > 0) {
+        emptyRiverCard.classList.add('hidden');
+      }
+
+      // Create interactive DOM element for the floated Krathong
+      const el = document.createElement('div');
+      el.className = 'floating-krathong';
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.setAttribute('aria-label', `กระทงของ ${krathongData.sender} คลิกเพื่ออ่านคำอธิษฐาน`);
+
+      const scale = 0.68 + krathongData.laneDepth * 0.42;
+      el.style.zIndex = String(Math.floor(krathongData.laneDepth * 10));
+      el.innerHTML = `
+        <div style="transform: scale(${scale.toFixed(2)});">
+          ${buildKrathongSVG(krathongData, 145)}
+        </div>
+        <div class="krathong-tag">🪷 ${escapeHtml(krathongData.sender)}</div>
+      `;
+
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openWishEcard(krathongData);
+      });
+
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          openWishEcard(krathongData);
+        }
+      });
+
+      krathongData.el = el;
+      riverLayer.appendChild(el);
+    }
+
+    function updateFloatingKrathongsDOM() {
+      const layerHeight = riverLayer.clientHeight || (ch * 0.44);
+      for (const item of state.floatedKrathongs) {
+        if (!item.el) continue;
+        item.x += item.speed;
+        if (item.x > cw + 120) {
+          item.x = -120;
+        }
+        const bobY = Math.sin(waveTick * 2.2 + item.phase) * 6;
+        const yPos = (layerHeight * (0.22 + item.laneDepth * 0.62)) + bobY;
+        item.el.style.left = `${item.x}px`;
+        item.el.style.top = `${yPos}px`;
+      }
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    /**************************************************************
+     * 7. CUSTOMIZATION STUDIO & WISH BUILDER UI
+     **************************************************************/
+    const studioModalBackdrop = document.getElementById('studioModalBackdrop');
+    const liveKrathongPreview = document.getElementById('liveKrathongPreview');
+    const specBaseName = document.getElementById('specBaseName');
+    const specFlowerName = document.getElementById('specFlowerName');
+    const specToppingName = document.getElementById('specToppingName');
+
+    const tabStep1 = document.getElementById('tabStep1');
+    const tabStep2 = document.getElementById('tabStep2');
+    const step1Content = document.getElementById('step1Content');
+    const step2Content = document.getElementById('step2Content');
+    const prevStepBtn = document.getElementById('prevStepBtn');
+    const nextStepBtn = document.getElementById('nextStepBtn');
+    const releaseKrathongBtn = document.getElementById('releaseKrathongBtn');
+
+    const senderNameInput = document.getElementById('senderNameInput');
+    const wishMessageInput = document.getElementById('wishMessageInput');
+    const wishFormError = document.getElementById('wishFormError');
+
+    function renderChoiceGrid(containerId, items, stateKey) {
+      const container = document.getElementById(containerId);
+      container.innerHTML = '';
+      items.forEach(item => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'choice-card' + (state.currentConfig[stateKey] === item.id ? ' selected' : '');
+        btn.innerHTML = `
+          <span class="choice-title"><span>${item.icon || ''}</span><span>${item.name}</span></span>
+          ${item.desc ? `<span class="choice-sub">${item.desc}</span>` : ''}
+        `;
+        btn.addEventListener('click', () => {
+          state.currentConfig[stateKey] = item.id;
+          renderStudioSelections();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderColorSwatches() {
+      const row = document.getElementById('colorOptionsRow');
+      row.innerHTML = '';
+      NEON_COLORS.forEach(col => {
+        const swatch = document.createElement('button');
+        swatch.type = 'button';
+        swatch.className = 'color-swatch' + (state.currentConfig.color === col.id ? ' selected' : '');
+        swatch.style.background = col.hex;
+        swatch.style.color = col.hex;
+        swatch.setAttribute('aria-label', col.name);
+        swatch.title = col.name;
+        swatch.addEventListener('click', () => {
+          state.currentConfig.color = col.id;
+          renderStudioSelections();
+        });
+        row.appendChild(swatch);
+      });
+    }
+
+    function renderWishCategories() {
+      const container = document.getElementById('wishCategoryGrid');
+      container.innerHTML = '';
+      WISH_CATEGORIES.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'choice-card' + (state.currentConfig.category === cat.id ? ' selected' : '');
+        btn.innerHTML = `<span class="choice-title">${cat.name}</span>`;
+        btn.addEventListener('click', () => {
+          state.currentConfig.category = cat.id;
+          renderWishCategories();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function renderPresetWishes() {
+      const row = document.getElementById('presetWishesRow');
+      row.innerHTML = '';
+      PRESET_WISHES.forEach(text => {
+        const chip = document.createElement('button');
+        chip.type = 'button';
+        chip.className = 'preset-chip';
+        chip.textContent = '+ ' + text;
+        chip.addEventListener('click', () => {
+          wishMessageInput.value = text;
+          wishFormError.textContent = '';
+        });
+        row.appendChild(chip);
+      });
+    }
+
+    function renderStudioSelections() {
+      renderChoiceGrid('baseOptionsGrid', BASES, 'base');
+      renderChoiceGrid('flowerOptionsGrid', FLOWERS, 'flower');
+      renderChoiceGrid('toppingOptionsGrid', TOPPINGS, 'topping');
+      renderColorSwatches();
+
+      // Update Live SVG Hologram Preview
+      liveKrathongPreview.innerHTML = buildKrathongSVG(state.currentConfig, 210);
+
+      const baseObj = BASES.find(b => b.id === state.currentConfig.base);
+      const flowerObj = FLOWERS.find(f => f.id === state.currentConfig.flower);
+      const toppingObj = TOPPINGS.find(t => t.id === state.currentConfig.topping);
+      specBaseName.textContent = baseObj ? baseObj.name : '-';
+      specFlowerName.textContent = flowerObj ? flowerObj.name : '-';
+      specToppingName.textContent = toppingObj ? toppingObj.name : '-';
+    }
+
+    function switchStudioStep(stepNumber) {
+      if (stepNumber === 1) {
+        tabStep1.classList.add('active');
+        tabStep1.setAttribute('aria-selected', 'true');
+        tabStep2.classList.remove('active');
+        tabStep2.setAttribute('aria-selected', 'false');
+
+        step1Content.classList.remove('hidden-step');
+        step2Content.classList.add('hidden-step');
+        prevStepBtn.style.visibility = 'hidden';
+        nextStepBtn.classList.remove('hidden-step');
+        releaseKrathongBtn.classList.add('hidden-step');
+      } else {
+        tabStep1.classList.remove('active');
+        tabStep1.setAttribute('aria-selected', 'false');
+        tabStep2.classList.add('active');
+        tabStep2.setAttribute('aria-selected', 'true');
+
+        step1Content.classList.add('hidden-step');
+        step2Content.classList.remove('hidden-step');
+        prevStepBtn.style.visibility = 'visible';
+        nextStepBtn.classList.add('hidden-step');
+        releaseKrathongBtn.classList.remove('hidden-step');
+      }
+      wishFormError.textContent = '';
+    }
+
+    function openStudioModal() {
+      renderStudioSelections();
+      renderWishCategories();
+      switchStudioStep(1);
+      studioModalBackdrop.classList.add('open');
+    }
+
+    function closeStudioModal() {
+      studioModalBackdrop.classList.remove('open');
+    }
+
+    function handleReleaseKrathong() {
+      const sender = senderNameInput.value.trim();
+      const wish = wishMessageInput.value.trim();
+
+      if (!sender) {
+        wishFormError.textContent = 'กรุณาระบุชื่อของคุณก่อนปล่อยกระทงไซเบอร์';
+        senderNameInput.focus();
+        return;
+      }
+      if (!wish) {
+        wishFormError.textContent = 'กรุณาพิมพ์คำอธิษฐานหรือเลือกข้อความอธิษฐานด้านล่าง';
+        wishMessageInput.focus();
+        return;
+      }
+
+      const newKrathong = {
+        id: 'kr_' + Date.now(),
+        base: state.currentConfig.base,
+        flower: state.currentConfig.flower,
+        topping: state.currentConfig.topping,
+        color: state.currentConfig.color,
+        sender,
+        category: state.currentConfig.category,
+        wish,
+        x: cw * (0.25 + Math.random() * 0.35),
+        laneDepth: 0.25 + Math.random() * 0.65,
+        speed: 0.38 + Math.random() * 0.35,
+        phase: Math.random() * Math.PI * 2
+      };
+
+      addKrathongToRiver(newKrathong);
+      closeStudioModal();
+
+      // Clear inputs for next creation
+      senderNameInput.value = '';
+      wishMessageInput.value = '';
+
+      // Play launch chime & trigger celebratory fireworks volley
+      audioEngine.playLaunchChime();
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          spawnFirework(cw * (0.25 + Math.random() * 0.5), ch * (0.16 + Math.random() * 0.22));
+        }, i * 320);
+      }
+    }
+
+    /**************************************************************
+     * 8. WISH E-CARD INSPECTION MODAL
+     **************************************************************/
+    const ecardModalBackdrop = document.getElementById('ecardModalBackdrop');
+    const ecardCategoryBadge = document.getElementById('ecardCategoryBadge');
+    const ecardKrathongVisual = document.getElementById('ecardKrathongVisual');
+    const ecardSenderName = document.getElementById('ecardSenderName');
+    const ecardWishText = document.getElementById('ecardWishText');
+
+    function openWishEcard(krathongData) {
+      const catObj = WISH_CATEGORIES.find(c => c.id === krathongData.category) || WISH_CATEGORIES[0];
+      ecardCategoryBadge.textContent = catObj.badge;
+      ecardKrathongVisual.innerHTML = buildKrathongSVG(krathongData, 185);
+      ecardSenderName.textContent = `กระทงของ ${krathongData.sender}`;
+      ecardWishText.textContent = `“${krathongData.wish}”`;
+      ecardModalBackdrop.classList.add('open');
+    }
+
+    function closeWishEcard() {
+      ecardModalBackdrop.classList.remove('open');
+    }
+
+    /**************************************************************
+     * 9. EVENT LISTENERS & INITIALIZATION
+     **************************************************************/
+    document.getElementById('openStudioBtn').addEventListener('click', openStudioModal);
+    document.getElementById('emptyStateBuildBtn').addEventListener('click', openStudioModal);
+    document.getElementById('closeStudioBtn').addEventListener('click', closeStudioModal);
+
+    tabStep1.addEventListener('click', () => switchStudioStep(1));
+    tabStep2.addEventListener('click', () => switchStudioStep(2));
+    prevStepBtn.addEventListener('click', () => switchStudioStep(1));
+    nextStepBtn.addEventListener('click', () => switchStudioStep(2));
+    releaseKrathongBtn.addEventListener('click', handleReleaseKrathong);
+
+    document.getElementById('closeEcardBtn').addEventListener('click', closeWishEcard);
+    document.getElementById('ecardCelebrateBtn').addEventListener('click', () => {
+      closeWishEcard();
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          spawnFirework(cw * (0.2 + Math.random() * 0.6), ch * (0.15 + Math.random() * 0.25));
+        }, i * 260);
+      }
+    });
+
+    // Close modals when clicking backdrop outside card
+    studioModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === studioModalBackdrop) closeStudioModal();
+    });
+    ecardModalBackdrop.addEventListener('click', (e) => {
+      if (e.target === ecardModalBackdrop) closeWishEcard();
+    });
+
+    // Launch Fireworks Button
+    document.getElementById('launchFireworkBtn').addEventListener('click', () => {
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          spawnFirework(cw * (0.2 + Math.random() * 0.6), ch * (0.14 + Math.random() * 0.28));
+        }, i * 240);
+      }
+    });
+
+    // Audio Ambient Toggle Button
+    const audioToggleBtn = document.getElementById('audioToggleBtn');
+    const audioIcon = document.getElementById('audioIcon');
+    const audioLabel = document.getElementById('audioLabel');
+
+    audioToggleBtn.addEventListener('click', () => {
+      const active = audioEngine.toggle();
+      state.audioEnabled = active;
+      audioToggleBtn.setAttribute('data-active', String(active));
+      audioToggleBtn.setAttribute('aria-pressed', String(active));
+      audioIcon.textContent = active ? '🔊' : '🔇';
+      audioLabel.textContent = active ? 'เสียงบรรยากาศ: เปิด' : 'เปิดเสียงบรรยากาศ';
+    });
+
+    // Initialize Canvas, Presets & Studio
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+    renderPresetWishes();
+    renderStudioSelections();
+    renderWishCategories();
+    requestAnimationFrame(renderScene);
+  </script>
+</body>
+</html>
