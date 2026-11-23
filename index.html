@@ -237,14 +237,19 @@
       backdrop-filter: blur(10px);
     }
 
-    .btn:hover {
+    .btn:hover:not(:disabled) {
       border-color: var(--neon-cyan);
       box-shadow: 0 0 16px rgba(0, 243, 255, 0.35);
       transform: translateY(-1px);
     }
 
-    .btn:active {
+    .btn:active:not(:disabled) {
       transform: translateY(0);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: wait;
     }
 
     .btn:focus-visible {
@@ -260,7 +265,7 @@
       box-shadow: 0 0 24px rgba(255, 0, 160, 0.45);
     }
 
-    .btn-primary:hover {
+    .btn-primary:hover:not(:disabled) {
       box-shadow: 0 0 32px rgba(0, 243, 255, 0.75), 0 0 18px rgba(255, 0, 160, 0.65);
       filter: brightness(1.1);
     }
@@ -926,8 +931,8 @@
           <!-- STEP 2: MAKE A WISH -->
           <div id="step2Content" class="config-section hidden-step">
             <div class="form-group">
-              <label class="config-label" for="senderNameInput">ชื่อของคุณ (Sender Name)</label>
-              <input type="text" id="senderNameInput" class="form-input" placeholder="เช่น นีโอ, พลอย 2077, Cyber Traveler..." maxlength="40">
+              <label class="config-label" for="senderNameInput">ชื่อของคุณ (Sender Name — เว้นว่างได้)</label>
+              <input type="text" id="senderNameInput" class="form-input" placeholder="เช่น นีโอ, พลอย 2077 หรือเว้นว่างไว้..." maxlength="40">
             </div>
 
             <div class="form-group">
@@ -968,7 +973,7 @@
       <button type="button" class="icon-close" id="closeEcardBtn" style="position: absolute; top: 16px; right: 16px;" aria-label="ปิดการ์ดคำอวยพร">✕</button>
       <div class="ecard-category" id="ecardCategoryBadge">พรด้านการงาน</div>
       <div class="ecard-svg-wrap" id="ecardKrathongVisual"></div>
-      <h3 class="ecard-sender" id="ecardSenderName">กระทงของ ผู้มาเยือน</h3>
+      <h3 class="ecard-sender" id="ecardSenderName"></h3>
       <blockquote class="ecard-wish" id="ecardWishText"></blockquote>
       <div style="display: flex; justify-content: center; gap: 10px;">
         <button type="button" class="btn btn-primary" id="ecardCelebrateBtn">
@@ -979,6 +984,23 @@
   </div>
 
   <script>
+    /**************************************************************
+     * 🔧 0. ตั้งค่า FIREBASE CLOUD FIRESTORE (วางค่าตรงนี้จุดเดียว!)
+     * คัดลอกก้อน const firebaseConfig = { ... }; จากหน้าเว็บ Firebase
+     * มาวางทับบล็อกด้านล่างนี้ แล้วเซฟไฟล์ไป Push ขึ้น GitHub ได้เลยครับ
+     **************************************************************/
+    const firebaseConfig = {
+		apiKey: "AIzaSyChR6OsCq_Vh30V1Hxkii1HsRPxs3n3dwA",
+		authDomain: "cyber-loy-krathong.firebaseapp.com",
+		projectId: "cyber-loy-krathong",
+		storageBucket: "cyber-loy-krathong.firebasestorage.app",
+		messagingSenderId: "730140755937",
+		appId: "1:730140755937:web:ad194123890ffc517534a0"
+	};
+
+    const FIRESTORE_COLLECTION = "krathongs";
+    const LOCAL_STORAGE_FALLBACK_KEY = "cyber_loy_krathong_2077_local";
+
     /**************************************************************
      * 1. CYBERPUNK KRATHONG CUSTOMIZATION CATALOG
      **************************************************************/
@@ -1098,11 +1120,14 @@
         wish: ''
       },
       floatedKrathongs: [],
-      audioEnabled: false
+      renderedIds: new Set(),
+      audioEnabled: false,
+      firestoreReady: false,
+      firestoreApi: null
     };
 
     /**************************************************************
-     * 3. WEB AUDIO API: AMBIENT CYBER-THAI SYNTH & FIREWORK SFX
+     * 3. WEB AUDIO API: CYBERPUNK SYNTHWAVE / DARKSYNTH & SFX
      **************************************************************/
     class CyberAudioEngine {
       constructor() {
@@ -1114,15 +1139,14 @@
         this.waterNode = null;
         this.activeNodes = [];
         this.stepIndex = 0;
-        // D Minor / Cyberpunk Synthwave Bass & Arpeggio frequencies (Hz)
-        this.bassProgression = [36.71, 36.71, 29.14, 32.70, 36.71, 36.71, 24.50, 27.50]; // D1, Bb0, C1, G0, A0
+        this.bassProgression = [36.71, 36.71, 29.14, 32.70, 36.71, 36.71, 24.50, 27.50];
         this.padChords = [
-          [146.83, 174.61, 220.00, 261.63, 329.63], // Dm9
-          [116.54, 146.83, 174.61, 220.00, 293.66], // Bbmaj9
-          [98.00,  146.83, 174.61, 220.00, 261.63], // Gm7(add11)
-          [110.00, 164.81, 196.00, 220.00, 277.18]  // A7 / Dark tension
+          [146.83, 174.61, 220.00, 261.63, 329.63],
+          [116.54, 146.83, 174.61, 220.00, 293.66],
+          [98.00,  146.83, 174.61, 220.00, 261.63],
+          [110.00, 164.81, 196.00, 220.00, 277.18]
         ];
-        this.scale = [293.66, 349.23, 440.00, 523.25, 587.33, 659.25, 587.33, 440.00]; // D4, F4, A4, C5, D5, E5
+        this.scale = [293.66, 349.23, 440.00, 523.25, 587.33, 659.25, 587.33, 440.00];
       }
 
       init() {
@@ -1131,7 +1155,6 @@
         if (!AudioCtx) return;
         this.ctx = new AudioCtx();
 
-        // Master compressor + gain for punchy Cyberpunk Synthwave mix
         const compressor = this.ctx.createDynamicsCompressor();
         compressor.threshold.value = -18;
         compressor.knee.value = 12;
@@ -1140,7 +1163,6 @@
         this.masterGain = this.ctx.createGain();
         this.masterGain.gain.value = 0.36;
 
-        // Stereo Cyber Delay / Echo Bus (375ms dotted-8th synthwave echo)
         this.delayNode = this.ctx.createDelay(1.0);
         this.delayNode.delayTime.value = 0.375;
         const delayFeedback = this.ctx.createGain();
@@ -1178,7 +1200,6 @@
         this.isPlaying = true;
         this.stepIndex = 0;
 
-        // 1. Deep Blade-Runner Style Analog Sub-Drone & Neon City Atmosphere
         const droneOsc1 = this.ctx.createOscillator();
         const droneOsc2 = this.ctx.createOscillator();
         const droneFilter = this.ctx.createBiquadFilter();
@@ -1187,18 +1208,17 @@
         const lfoGain = this.ctx.createGain();
 
         droneOsc1.type = 'sawtooth';
-        droneOsc1.frequency.value = 36.71; // Deep D1
+        droneOsc1.frequency.value = 36.71;
         droneOsc1.detune.value = -9;
 
         droneOsc2.type = 'sawtooth';
-        droneOsc2.frequency.value = 73.42; // D2 octave
+        droneOsc2.frequency.value = 73.42;
         droneOsc2.detune.value = 9;
 
         droneFilter.type = 'lowpass';
         droneFilter.frequency.value = 145;
         droneFilter.Q.value = 4.5;
 
-        // Slow filter sweep LFO for breathing cyberpunk pad texture
         lfo.type = 'sine';
         lfo.frequency.value = 0.14;
         lfoGain.gain.value = 65;
@@ -1217,7 +1237,6 @@
         lfo.start();
         this.activeNodes.push(droneOsc1, droneOsc2, lfo);
 
-        // Subtle futuristic rain / neon static shimmer
         const bufferSize = this.ctx.sampleRate * 2;
         const noiseBuffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const output = noiseBuffer.getChannelData(0);
@@ -1241,7 +1260,6 @@
         shimmerGain.connect(this.masterGain);
         this.waterNode.start();
 
-        // 2. Cyberpunk Darksynth / Synthwave Sequencer (120 BPM = 125ms per 16th step)
         const triggerCyberStep = () => {
           if (!this.isPlaying || !this.ctx) return;
           const now = this.ctx.currentTime;
@@ -1249,26 +1267,22 @@
           const bar = Math.floor(step / 16);
           const stepInBar = step % 16;
 
-          // A. Lush Vangelis / CS-80 Warm Detuned Synth Pad on step 0 of every 2 bars
           if (step % 32 === 0) {
             const chord = this.padChords[Math.floor(step / 32) % this.padChords.length];
             this.playCyberPadChord(chord, now, 3.9);
           }
 
-          // B. Driving Rolling Synthwave Bassline (every 16th note)
           const rootFreq = this.bassProgression[bar % this.bassProgression.length];
           const isAccent = (stepInBar % 4 === 0);
           const bassFreq = (stepInBar % 2 === 1) ? rootFreq * 2 : rootFreq;
           this.playSynthBassNote(bassFreq, now, isAccent);
 
-          // C. Neon Cyberpunk Arpeggio Lead (pulsing futuristic plucks with stereo delay)
           if (stepInBar % 2 === 0 || stepInBar === 15) {
             const arpIdx = (stepInBar / 2 + bar) % this.scale.length;
-            const arpFreq = this.scale[ Math.floor(arpIdx) ];
+            const arpFreq = this.scale[Math.floor(arpIdx)];
             this.playNeonArpPluck(arpFreq, now, stepInBar === 0 || stepInBar === 6);
           }
 
-          // D. Electronic Cyber Kick & Snare Pulse (Subtle Synthwave Beat)
           if (stepInBar === 0 || stepInBar === 8) {
             this.playCyberKick(now);
           } else if (stepInBar === 4 || stepInBar === 12) {
@@ -1396,7 +1410,6 @@
       }
 
       playCyberSnare(time) {
-        // Gated synthwave snare burst
         const bufferSize = Math.floor(this.ctx.sampleRate * 0.18);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -1445,7 +1458,6 @@
         if (!this.isPlaying || !this.ctx) return;
         const now = this.ctx.currentTime;
 
-        // Sci-Fi Plasma Cannon Charge & Sub-Bass Impact
         const laser = this.ctx.createOscillator();
         const laserGain = this.ctx.createGain();
         laser.type = 'sawtooth';
@@ -1461,7 +1473,6 @@
         laser.start(now);
         laser.stop(now + 0.39);
 
-        // Cyber Explosion Plasma Burst
         const bufferSize = Math.floor(this.ctx.sampleRate * 0.65);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
@@ -1492,7 +1503,6 @@
       playLaunchChime() {
         if (!this.isPlaying || !this.ctx) return;
         const now = this.ctx.currentTime;
-        // Cyberpunk Hologram Warp Power-Up Arpeggio (Dm9 -> D5)
         const notes = [293.66, 349.23, 440.00, 523.25, 587.33, 659.25, 880.00];
         notes.forEach((freq, idx) => {
           const t = now + idx * 0.055;
@@ -1534,18 +1544,15 @@
       const secondary = colorObj.secondary;
       const uid = 'k_' + Math.random().toString(36).substring(2, 9);
 
-      // 1. Base SVG Layer
       let baseLayer = '';
       if (config.base === 'quantum_lotus') {
         baseLayer = `
-          <!-- Quantum Lotus Pod Base -->
           <ellipse cx="100" cy="146" rx="74" ry="18" fill="#09102c" stroke="${primary}" stroke-width="2.5"/>
           <path d="M28 142 L48 118 L72 136 L100 114 L128 136 L152 118 L172 142 Z" fill="rgba(12, 22, 56, 0.92)" stroke="${primary}" stroke-width="2"/>
           <path d="M40 146 H160" stroke="${secondary}" stroke-width="2" stroke-dasharray="6 4"/>
         `;
       } else if (config.base === 'hover_drone') {
         baseLayer = `
-          <!-- Hover Drone Ring Base -->
           <ellipse cx="100" cy="148" rx="78" ry="16" fill="#070d24" stroke="${primary}" stroke-width="3"/>
           <ellipse cx="100" cy="142" rx="64" ry="12" fill="#121c44" stroke="${secondary}" stroke-width="1.8" stroke-dasharray="10 5"/>
           <circle cx="48" cy="145" r="5" fill="${primary}"/>
@@ -1554,7 +1561,6 @@
         `;
       } else if (config.base === 'hexa_circuit') {
         baseLayer = `
-          <!-- Hexa-Circuit Deck Base -->
           <polygon points="30,140 62,124 138,124 170,140 144,158 56,158" fill="#091230" stroke="${primary}" stroke-width="2.5"/>
           <polyline points="48,140 72,132 128,132 152,140" fill="none" stroke="${secondary}" stroke-width="2"/>
           <line x1="72" y1="132" x2="66" y2="154" stroke="${primary}" stroke-width="1.5"/>
@@ -1562,17 +1568,14 @@
         `;
       } else {
         baseLayer = `
-          <!-- Crystal Prism Deck Base -->
           <polygon points="26,142 58,118 100,126 142,118 174,142 138,158 62,158" fill="rgba(0, 243, 255, 0.18)" stroke="${primary}" stroke-width="2.4"/>
           <polygon points="52,142 100,116 148,142 100,156" fill="rgba(255, 0, 160, 0.22)" stroke="${secondary}" stroke-width="1.8"/>
         `;
       }
 
-      // 2. Holo-Flower Core Layer
       let flowerLayer = '';
       if (config.flower === 'holo_lotus') {
         flowerLayer = `
-          <!-- Holo-Lotus Matrix -->
           <path d="M100 72 L122 108 L100 128 L78 108 Z" fill="rgba(255, 0, 160, 0.35)" stroke="${secondary}" stroke-width="2"/>
           <path d="M100 78 L142 104 L122 128 L100 122 Z" fill="rgba(0, 243, 255, 0.28)" stroke="${primary}" stroke-width="1.8"/>
           <path d="M100 78 L58 104 L78 128 L100 122 Z" fill="rgba(0, 243, 255, 0.28)" stroke="${primary}" stroke-width="1.8"/>
@@ -1580,7 +1583,6 @@
         `;
       } else if (config.flower === 'fiber_marigold') {
         flowerLayer = `
-          <!-- Cyber Marigold Array -->
           <circle cx="76" cy="114" r="14" fill="rgba(255, 209, 59, 0.28)" stroke="#ffd13b" stroke-width="2" stroke-dasharray="4 2"/>
           <circle cx="124" cy="114" r="14" fill="rgba(255, 209, 59, 0.28)" stroke="#ffd13b" stroke-width="2" stroke-dasharray="4 2"/>
           <circle cx="100" cy="106" r="18" fill="rgba(255, 168, 0, 0.35)" stroke="${primary}" stroke-width="2.2"/>
@@ -1588,25 +1590,21 @@
         `;
       } else if (config.flower === 'plasma_orchid') {
         flowerLayer = `
-          <!-- Plasma Orchid Cluster -->
           <path d="M100 84 C125 78, 145 104, 118 122 C136 132, 108 140, 100 124 C92 140, 64 132, 82 122 C55 104, 75 78, 100 84 Z"
                 fill="rgba(157, 78, 221, 0.42)" stroke="${secondary}" stroke-width="2"/>
           <circle cx="100" cy="108" r="8" fill="${primary}"/>
         `;
       } else {
         flowerLayer = `
-          <!-- Neon Synth Rose -->
           <circle cx="100" cy="108" r="21" fill="rgba(255, 0, 110, 0.32)" stroke="${secondary}" stroke-width="2.2"/>
           <path d="M88 106 Q100 90 112 106 Q102 122 88 106 Z" fill="none" stroke="${primary}" stroke-width="2"/>
           <circle cx="100" cy="106" r="5" fill="#ffd13b"/>
         `;
       }
 
-      // 3. Topping Tech Module Layer
       let toppingLayer = '';
       if (config.topping === 'laser_candle') {
         toppingLayer = `
-          <!-- Plasma Incense & Laser Candle -->
           <line x1="88" y1="95" x2="80" y2="42" stroke="${secondary}" stroke-width="2"/>
           <line x1="112" y1="95" x2="120" y2="42" stroke="${secondary}" stroke-width="2"/>
           <circle cx="80" cy="40" r="3.5" fill="#00f3ff"/>
@@ -1617,26 +1615,22 @@
         `;
       } else if (config.topping === 'mecha_neko') {
         toppingLayer = `
-          <!-- Mecha Lucky Neko Bot -->
           <path d="M78 78 L82 54 L94 64 H106 L118 54 L122 78 Z" fill="#131f4c" stroke="${primary}" stroke-width="2"/>
           <rect x="78" y="64" width="44" height="32" rx="10" fill="#10193f" stroke="${primary}" stroke-width="2"/>
           <circle cx="91" cy="78" r="4" fill="#00f3ff"/>
           <circle cx="109" cy="78" r="4" fill="#00f3ff"/>
           <path d="M96 86 H104" stroke="#ffd13b" stroke-width="2.5" stroke-linecap="round"/>
-          <!-- Glowing Candle Antenna -->
           <line x1="100" y1="54" x2="100" y2="34" stroke="#ffd13b" stroke-width="2.5"/>
           <circle cx="100" cy="30" r="6" fill="#ffd13b"/>
         `;
       } else if (config.topping === 'crypto_reactor') {
         toppingLayer = `
-          <!-- Quantum Coin Core -->
           <circle cx="100" cy="64" r="22" fill="rgba(255, 209, 59, 0.22)" stroke="#ffd13b" stroke-width="2.5"/>
           <polygon points="100,47 114,64 100,81 86,64" fill="rgba(0, 243, 255, 0.35)" stroke="${primary}" stroke-width="2"/>
           <text x="100" y="69" text-anchor="middle" fill="#ffd13b" font-size="14" font-family="Orbitron, sans-serif" font-weight="700">฿</text>
         `;
       } else {
         toppingLayer = `
-          <!-- Holo-Matrix Signboard -->
           <rect x="64" y="48" width="72" height="28" rx="6" fill="rgba(7, 13, 36, 0.92)" stroke="${primary}" stroke-width="2"/>
           <text x="100" y="66" text-anchor="middle" fill="#00f3ff" font-size="11" font-family="Orbitron, sans-serif" font-weight="700">WISH // 2077</text>
           <line x1="84" y1="76" x2="84" y2="96" stroke="${secondary}" stroke-width="2"/>
@@ -1653,7 +1647,6 @@
               <stop offset="100%" stop-color="${primary}" stop-opacity="0"/>
             </radialGradient>
           </defs>
-          <!-- Water Reflection & Aura -->
           <ellipse cx="100" cy="158" rx="82" ry="12" fill="url(#${uid}_glow)"/>
           <ellipse cx="100" cy="164" rx="56" ry="5" fill="${primary}" fill-opacity="0.35"/>
           ${toppingLayer}
@@ -1674,7 +1667,6 @@
     const stars = [];
     const fireworks = [];
     const sparks = [];
-    const waterRipples = [];
 
     function resizeCanvas() {
       cw = window.innerWidth;
@@ -1736,13 +1728,10 @@
       }
     }
 
-    // Click on sky to launch fireworks
     canvas.addEventListener('pointerdown', (e) => {
       const rect = canvas.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const clickY = e.clientY - rect.top;
-
-      // Launch firework where clicked (if clicked on river, shoot into the sky above that X coordinate)
       const skyY = clickY < ch * 0.54 ? clickY : ch * (0.18 + Math.random() * 0.25);
       spawnFirework(clickX, skyY);
     });
@@ -1753,7 +1742,6 @@
       waveTick += 0.018;
       const horizonY = ch * 0.55;
 
-      // 1. Cyber Night Sky Gradient
       const skyGrad = ctx.createLinearGradient(0, 0, 0, horizonY);
       skyGrad.addColorStop(0, '#040410');
       skyGrad.addColorStop(0.55, '#0b0c2a');
@@ -1761,7 +1749,6 @@
       ctx.fillStyle = skyGrad;
       ctx.fillRect(0, 0, cw, horizonY);
 
-      // 2. Twinkling Cyber Stars
       for (const s of stars) {
         const alpha = 0.45 + 0.55 * Math.sin(waveTick * 2 + s.phase);
         ctx.fillStyle = s.color;
@@ -1772,7 +1759,6 @@
       }
       ctx.globalAlpha = 1;
 
-      // 3. Giant Full Cyber-Moon with Holographic Rings
       const moonX = cw * 0.78;
       const moonY = ch * 0.19;
       const moonRadius = Math.min(cw, ch) * 0.075;
@@ -1791,14 +1777,12 @@
       ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Cyber ring around moon
       ctx.strokeStyle = 'rgba(0, 243, 255, 0.55)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
       ctx.ellipse(moonX, moonY, moonRadius * 1.45, moonRadius * 0.35, -0.22, 0, Math.PI * 2);
       ctx.stroke();
 
-      // 4. Neo-Bangkok Silhouette & Temple Spire (Wat Arun Cyber Silhouette)
       ctx.fillStyle = '#07091e';
       const stepWidth = 48;
       for (let x = 0; x < cw + stepWidth; x += stepWidth) {
@@ -1806,7 +1790,6 @@
         ctx.fillRect(x, horizonY - bHeight, stepWidth - 4, bHeight);
       }
 
-      // Cyber Spire Silhouette on left-center
       const spireX = cw * 0.22;
       ctx.fillStyle = '#090b24';
       ctx.beginPath();
@@ -1821,7 +1804,6 @@
       ctx.lineWidth = 1.5;
       ctx.stroke();
 
-      // Horizon Neon Laser Line
       ctx.strokeStyle = '#00f3ff';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1829,7 +1811,6 @@
       ctx.lineTo(cw, horizonY);
       ctx.stroke();
 
-      // 5. Digital Chao Phraya River with Perspective Grid & Neon Waves
       const riverGrad = ctx.createLinearGradient(0, horizonY, 0, ch);
       riverGrad.addColorStop(0, '#100c36');
       riverGrad.addColorStop(0.45, '#07112e');
@@ -1837,7 +1818,6 @@
       ctx.fillStyle = riverGrad;
       ctx.fillRect(0, horizonY, cw, ch - horizonY);
 
-      // Perspective Cyber Grid Lines on River
       ctx.strokeStyle = 'rgba(0, 243, 255, 0.13)';
       ctx.lineWidth = 1;
       const vanishX = cw * 0.5;
@@ -1848,7 +1828,6 @@
         ctx.stroke();
       }
 
-      // Animated Glowing Horizontal Water Waves
       for (let row = 1; row <= 12; row++) {
         const norm = row / 12;
         const y = horizonY + Math.pow(norm, 1.45) * (ch - horizonY);
@@ -1865,7 +1844,6 @@
         ctx.stroke();
       }
 
-      // Moon reflection shimmer on water
       for (let i = 0; i < 14; i++) {
         const ry = horizonY + 14 + i * ((ch - horizonY) / 16);
         const rw = (18 + i * 5) + Math.sin(waveTick * 3 + i) * 8;
@@ -1873,7 +1851,6 @@
         ctx.fillRect(moonX - rw / 2, ry, rw, 3);
       }
 
-      // 6. Update & Render Fireworks Rockets
       for (let i = fireworks.length - 1; i >= 0; i--) {
         const fw = fireworks[i];
         fw.progress += fw.speed;
@@ -1891,12 +1868,11 @@
         }
       }
 
-      // 7. Update & Render Firework Sparks
       for (let i = sparks.length - 1; i >= 0; i--) {
         const sp = sparks[i];
         sp.x += sp.vx;
         sp.y += sp.vy;
-        sp.vy += 0.055; // subtle gravity
+        sp.vy += 0.055;
         sp.vx *= 0.985;
         sp.alpha -= sp.decay;
 
@@ -1916,57 +1892,102 @@
         ctx.restore();
       }
 
-      // 8. Update Floating Krathong DOM Positions on the River
       updateFloatingKrathongsDOM();
-
       requestAnimationFrame(renderScene);
     }
 
     /**************************************************************
-     * 6. FLOATING KRATHONGS RIVER CONTROLLER
+     * 6. FLOATING KRATHONGS RIVER CONTROLLER & FIRESTORE SYNC
      **************************************************************/
     const riverLayer = document.getElementById('riverKrathongsLayer');
     const totalCountEl = document.getElementById('totalKrathongCount');
     const emptyRiverCard = document.getElementById('emptyRiverCard');
 
-    function addKrathongToRiver(krathongData) {
-      state.floatedKrathongs.push(krathongData);
-      totalCountEl.textContent = state.floatedKrathongs.length.toLocaleString('th-TH');
-
+    function updateCounterAndEmptyState(overrideTotal) {
+      const count = typeof overrideTotal === 'number' ? overrideTotal : state.floatedKrathongs.length;
+      totalCountEl.textContent = count.toLocaleString('th-TH');
       if (state.floatedKrathongs.length > 0) {
         emptyRiverCard.classList.add('hidden');
+      } else {
+        emptyRiverCard.classList.remove('hidden');
+      }
+    }
+
+    function addKrathongToRiver(krathongData, spreadAcrossRiver = false) {
+      if (krathongData.id && state.renderedIds.has(krathongData.id)) {
+        return;
+      }
+      if (krathongData.id) {
+        state.renderedIds.add(krathongData.id);
       }
 
-      // Create interactive DOM element for the floated Krathong
+      const item = {
+        id: krathongData.id || ('kr_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+        base: krathongData.base || BASES[0].id,
+        flower: krathongData.flower || FLOWERS[0].id,
+        topping: krathongData.topping || TOPPINGS[0].id,
+        color: krathongData.color || NEON_COLORS[0].id,
+        sender: typeof krathongData.sender === 'string' ? krathongData.sender.trim() : '',
+        category: krathongData.category || WISH_CATEGORIES[0].id,
+        wish: krathongData.wish || '',
+        x: spreadAcrossRiver
+          ? (Math.random() * cw)
+          : (cw * (0.22 + Math.random() * 0.36)),
+        laneDepth: typeof krathongData.laneDepth === 'number'
+          ? krathongData.laneDepth
+          : (0.22 + Math.random() * 0.68),
+        speed: typeof krathongData.speed === 'number'
+          ? krathongData.speed
+          : (0.36 + Math.random() * 0.36),
+        phase: Math.random() * Math.PI * 2
+      };
+
       const el = document.createElement('div');
       el.className = 'floating-krathong';
       el.setAttribute('role', 'button');
       el.setAttribute('tabindex', '0');
-      el.setAttribute('aria-label', `กระทงของ ${krathongData.sender} คลิกเพื่ออ่านคำอธิษฐาน`);
+      el.setAttribute(
+        'aria-label',
+        item.sender ? `กระทงของ ${item.sender} คลิกเพื่ออ่านคำอธิษฐาน` : 'คลิกเพื่ออ่านคำอธิษฐาน'
+      );
 
-      const scale = 0.68 + krathongData.laneDepth * 0.42;
-      el.style.zIndex = String(Math.floor(krathongData.laneDepth * 10));
+      const scale = 0.68 + item.laneDepth * 0.42;
+      el.style.zIndex = String(Math.floor(item.laneDepth * 10));
       el.innerHTML = `
         <div style="transform: scale(${scale.toFixed(2)});">
-          ${buildKrathongSVG(krathongData, 145)}
+          ${buildKrathongSVG(item, 145)}
         </div>
-        <div class="krathong-tag">🪷 ${escapeHtml(krathongData.sender)}</div>
+        ${item.sender ? `<div class="krathong-tag">🪷 ${escapeHtml(item.sender)}</div>` : ''}
       `;
 
       el.addEventListener('click', (e) => {
         e.stopPropagation();
-        openWishEcard(krathongData);
+        openWishEcard(item);
       });
 
       el.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          openWishEcard(krathongData);
+          openWishEcard(item);
         }
       });
 
-      krathongData.el = el;
+      item.el = el;
+      state.floatedKrathongs.push(item);
       riverLayer.appendChild(el);
+      updateCounterAndEmptyState();
+    }
+
+    function removeKrathongFromRiver(docId) {
+      const idx = state.floatedKrathongs.findIndex(k => k.id === docId);
+      if (idx !== -1) {
+        const [removed] = state.floatedKrathongs.splice(idx, 1);
+        if (removed && removed.el && removed.el.parentNode) {
+          removed.el.parentNode.removeChild(removed.el);
+        }
+      }
+      state.renderedIds.delete(docId);
+      updateCounterAndEmptyState();
     }
 
     function updateFloatingKrathongsDOM() {
@@ -1991,6 +2012,107 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+    }
+
+    function isFirebaseConfigured() {
+      return Boolean(
+        firebaseConfig &&
+        firebaseConfig.apiKey &&
+        firebaseConfig.projectId &&
+        !firebaseConfig.apiKey.includes('PASTE_YOUR_') &&
+        !firebaseConfig.projectId.includes('PASTE_YOUR_')
+      );
+    }
+
+    function loadLocalFallbackKrathongs() {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_FALLBACK_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw);
+        if (Array.isArray(saved)) {
+          saved.forEach(item => addKrathongToRiver(item, true));
+        }
+      } catch (e) {
+        // Ignore storage restrictions in sandboxed environments
+      }
+    }
+
+    function saveLocalFallbackKrathong(record) {
+      try {
+        const raw = localStorage.getItem(LOCAL_STORAGE_FALLBACK_KEY);
+        const list = raw ? JSON.parse(raw) : [];
+        if (Array.isArray(list)) {
+          list.push(record);
+          localStorage.setItem(LOCAL_STORAGE_FALLBACK_KEY, JSON.stringify(list.slice(-120)));
+        }
+      } catch (e) {
+        // Ignore storage restrictions in sandboxed environments
+      }
+    }
+
+    async function initDatabaseSync() {
+      if (!isFirebaseConfigured()) {
+        loadLocalFallbackKrathongs();
+        return;
+      }
+
+      try {
+        const [appMod, fsMod] = await Promise.all([
+          import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js'),
+          import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js')
+        ]);
+
+        const app = appMod.initializeApp(firebaseConfig);
+        const db = fsMod.getFirestore(app);
+
+        state.firestoreApi = {
+          db,
+          collection: fsMod.collection,
+          addDoc: fsMod.addDoc,
+          serverTimestamp: fsMod.serverTimestamp
+        };
+        state.firestoreReady = true;
+
+        const krathongsRef = fsMod.collection(db, FIRESTORE_COLLECTION);
+        const q = fsMod.query(krathongsRef, fsMod.orderBy('createdAt', 'desc'), fsMod.limit(120));
+
+        let initialBatch = true;
+        fsMod.onSnapshot(
+          q,
+          (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              const data = change.doc.data() || {};
+              if (change.type === 'added') {
+                addKrathongToRiver(
+                  {
+                    id: change.doc.id,
+                    base: data.base,
+                    flower: data.flower,
+                    topping: data.topping,
+                    color: data.color,
+                    sender: data.sender || '',
+                    category: data.category,
+                    wish: data.wish || ''
+                  },
+                  initialBatch
+                );
+              } else if (change.type === 'removed') {
+                removeKrathongFromRiver(change.doc.id);
+              }
+            });
+            initialBatch = false;
+            updateCounterAndEmptyState(snapshot.size);
+          },
+          (err) => {
+            console.error('Firestore real-time listener error:', err);
+            loadLocalFallbackKrathongs();
+          }
+        );
+      } catch (err) {
+        console.error('Firebase initialization failed, falling back to local mode:', err);
+        state.firestoreReady = false;
+        loadLocalFallbackKrathongs();
+      }
     }
 
     /**************************************************************
@@ -2090,7 +2212,6 @@
       renderChoiceGrid('toppingOptionsGrid', TOPPINGS, 'topping');
       renderColorSwatches();
 
-      // Update Live SVG Hologram Preview
       liveKrathongPreview.innerHTML = buildKrathongSVG(state.currentConfig, 210);
 
       const baseObj = BASES.find(b => b.id === state.currentConfig.base);
@@ -2139,49 +2260,58 @@
       studioModalBackdrop.classList.remove('open');
     }
 
-    function handleReleaseKrathong() {
+    async function handleReleaseKrathong() {
       const sender = senderNameInput.value.trim();
       const wish = wishMessageInput.value.trim();
 
-      if (!sender) {
-        wishFormError.textContent = 'กรุณาระบุชื่อของคุณก่อนปล่อยกระทงไซเบอร์';
-        senderNameInput.focus();
-        return;
-      }
       if (!wish) {
         wishFormError.textContent = 'กรุณาพิมพ์คำอธิษฐานหรือเลือกข้อความอธิษฐานด้านล่าง';
         wishMessageInput.focus();
         return;
       }
 
-      const newKrathong = {
-        id: 'kr_' + Date.now(),
+      const payload = {
         base: state.currentConfig.base,
         flower: state.currentConfig.flower,
         topping: state.currentConfig.topping,
         color: state.currentConfig.color,
         sender,
         category: state.currentConfig.category,
-        wish,
-        x: cw * (0.25 + Math.random() * 0.35),
-        laneDepth: 0.25 + Math.random() * 0.65,
-        speed: 0.38 + Math.random() * 0.35,
-        phase: Math.random() * Math.PI * 2
+        wish
       };
 
-      addKrathongToRiver(newKrathong);
-      closeStudioModal();
+      releaseKrathongBtn.disabled = true;
+      wishFormError.textContent = '';
 
-      // Clear inputs for next creation
-      senderNameInput.value = '';
-      wishMessageInput.value = '';
+      try {
+        if (state.firestoreReady && state.firestoreApi) {
+          const { db, collection, addDoc, serverTimestamp } = state.firestoreApi;
+          const docRef = await addDoc(collection(db, FIRESTORE_COLLECTION), {
+            ...payload,
+            createdAt: serverTimestamp()
+          });
+          addKrathongToRiver({ id: docRef.id, ...payload }, false);
+        } else {
+          const localRecord = { id: 'kr_' + Date.now(), ...payload };
+          addKrathongToRiver(localRecord, false);
+          saveLocalFallbackKrathong(localRecord);
+        }
 
-      // Play launch chime & trigger celebratory fireworks volley
-      audioEngine.playLaunchChime();
-      for (let i = 0; i < 3; i++) {
-        setTimeout(() => {
-          spawnFirework(cw * (0.25 + Math.random() * 0.5), ch * (0.16 + Math.random() * 0.22));
-        }, i * 320);
+        closeStudioModal();
+        senderNameInput.value = '';
+        wishMessageInput.value = '';
+
+        audioEngine.playLaunchChime();
+        for (let i = 0; i < 3; i++) {
+          setTimeout(() => {
+            spawnFirework(cw * (0.25 + Math.random() * 0.5), ch * (0.16 + Math.random() * 0.22));
+          }, i * 320);
+        }
+      } catch (err) {
+        console.error('Error saving Krathong to Firestore:', err);
+        wishFormError.textContent = 'ไม่สามารถบันทึกลง Cloud Firestore ได้ กรุณาตรวจสอบค่า firebaseConfig และ Firestore Rules (Publish)';
+      } finally {
+        releaseKrathongBtn.disabled = false;
       }
     }
 
@@ -2198,7 +2328,8 @@
       const catObj = WISH_CATEGORIES.find(c => c.id === krathongData.category) || WISH_CATEGORIES[0];
       ecardCategoryBadge.textContent = catObj.badge;
       ecardKrathongVisual.innerHTML = buildKrathongSVG(krathongData, 185);
-      ecardSenderName.textContent = `กระทงของ ${krathongData.sender}`;
+      ecardSenderName.textContent = krathongData.sender ? `กระทงของ ${krathongData.sender}` : '';
+      ecardSenderName.style.display = krathongData.sender ? '' : 'none';
       ecardWishText.textContent = `“${krathongData.wish}”`;
       ecardModalBackdrop.classList.add('open');
     }
@@ -2230,7 +2361,6 @@
       }
     });
 
-    // Close modals when clicking backdrop outside card
     studioModalBackdrop.addEventListener('click', (e) => {
       if (e.target === studioModalBackdrop) closeStudioModal();
     });
@@ -2238,7 +2368,6 @@
       if (e.target === ecardModalBackdrop) closeWishEcard();
     });
 
-    // Launch Fireworks Button
     document.getElementById('launchFireworkBtn').addEventListener('click', () => {
       for (let i = 0; i < 3; i++) {
         setTimeout(() => {
@@ -2247,7 +2376,6 @@
       }
     });
 
-    // Audio Ambient Toggle Button
     const audioToggleBtn = document.getElementById('audioToggleBtn');
     const audioIcon = document.getElementById('audioIcon');
     const audioLabel = document.getElementById('audioLabel');
@@ -2261,12 +2389,12 @@
       audioLabel.textContent = active ? 'เสียงบรรยากาศ: เปิด' : 'เปิดเสียงบรรยากาศ';
     });
 
-    // Initialize Canvas, Presets & Studio
     window.addEventListener('resize', resizeCanvas);
     resizeCanvas();
     renderPresetWishes();
     renderStudioSelections();
     renderWishCategories();
+    initDatabaseSync();
     requestAnimationFrame(renderScene);
   </script>
 </body>
